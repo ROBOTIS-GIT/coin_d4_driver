@@ -4,32 +4,44 @@
 #include <string>
 #include <memory>
 
-#include "coin_d4_driver/coin_d4_handler.hpp"
+#include "coin_d4_driver/coin_d4_base_handler.hpp"
 
 
 namespace robotis
 {
 namespace coin_d4
 {
-CoinD4Handler::CoinD4Handler(const std::string parameter_prefix, rclcpp::Node * node)
-: parameter_prefix_(parameter_prefix), node_(node)
+CoinD4BaseHandler::CoinD4BaseHandler(
+  const std::string parameter_prefix,
+  const rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr & logging_interface,
+  const rclcpp::node_interfaces::NodeParametersInterface::SharedPtr & params_interface)
+: parameter_prefix_(parameter_prefix), logging_interface_(logging_interface),
+  params_interface_(params_interface)
 {
   this->init_structs();
 }
 
-CoinD4Handler::~CoinD4Handler()
+CoinD4BaseHandler::~CoinD4BaseHandler()
 {
-  RCLCPP_INFO(node_->get_logger(), "Closed lidar for port %s", lidar_general_info_.port.c_str());
+  skip_grab_ = true;
+  if (grab_thread_.joinable()) {
+    grab_thread_.join();
+  }
+  skip_publish_ = true;
+  if (publish_thread_.joinable()) {
+    publish_thread_.join();
+  }
   serial_port_->close();
 	lidar_status_->lidar_ready = false;
 	lidar_status_->close_lidar = true;
 	flush_serial();
-  if (laser_scan_pub_) {
-    laser_scan_pub_.reset();
-  }
+  RCLCPP_INFO(
+    logging_interface_->get_logger(),
+    "Closed lidar for port %s",
+    lidar_general_info_.port.c_str());
 }
 
-void CoinD4Handler::init_structs()
+void CoinD4BaseHandler::init_structs()
 {
   lidar_status_ = std::make_shared<LidarHardwareStatus>();
   lidar_time_ = std::make_shared<LidarTimeStatus>();
@@ -46,23 +58,23 @@ void CoinD4Handler::init_structs()
   switch (lidar_general_info_.version)
 	{
     case M1C1_Mini_v1:
-      RCLCPP_INFO(node_->get_logger(), "version M1C1_Mini_v1");
+      RCLCPP_INFO(logging_interface_->get_logger(), "version M1C1_Mini_v1");
       lidar_general_info_.m_SerialBaudrate = 115200;
       break;
 
     case M1C1_Mini_v2:
-      RCLCPP_INFO(node_->get_logger(), "version M1C1_Mini_v2");
+      RCLCPP_INFO(logging_interface_->get_logger(), "version M1C1_Mini_v2");
       lidar_general_info_.m_SerialBaudrate = 150000;
       lidar_general_info_.m_intensities = true;
       break;
 
     case M1CT_Coin_Plus:
-      RCLCPP_INFO(node_->get_logger(), "version M1CT_Coin_Plus");
+      RCLCPP_INFO(logging_interface_->get_logger(), "version M1CT_Coin_Plus");
       lidar_general_info_.m_SerialBaudrate = 115200;
       break;
 
     case M1CT_TOF:
-      RCLCPP_INFO(node_->get_logger(), "version M1CT_TOF");
+      RCLCPP_INFO(logging_interface_->get_logger(), "version M1CT_TOF");
       lidar_general_info_.m_SerialBaudrate = 230400;
       lidar_general_info_.m_intensities = true;
       break;
@@ -85,28 +97,26 @@ void CoinD4Handler::init_structs()
   }
 
   if(!init_lidar_port()){
-		RCLCPP_WARN(node_->get_logger(), "Lidar port is wrong");
+		RCLCPP_WARN(logging_interface_->get_logger(), "Lidar port is wrong");
 		return;
 	}
   lidar_data_processing_->set_serial_port(serial_port_.get());
 	scan_node_buf_ = new node_info[1000];
-
-  laser_scan_pub_ =
-    node_->create_publisher<sensor_msgs::msg::LaserScan>(
-      lidar_general_info_.topic_name,
-      rclcpp::SensorDataQoS());
 }
 
-bool CoinD4Handler::init_lidar_port()
+bool CoinD4BaseHandler::init_lidar_port()
 {
   if (lidar_status_->isConnected) {
 		return true;
 	}
   if (parameter_prefix_.empty()) {
-    RCLCPP_INFO(node_->get_logger(), "Lidar port: %s", lidar_general_info_.port.c_str());
+    RCLCPP_INFO(
+      logging_interface_->get_logger(),
+      "Lidar port: %s",
+      lidar_general_info_.port.c_str());
   } else {
     RCLCPP_INFO(
-      node_->get_logger(),
+      logging_interface_->get_logger(),
       "%s lidar port: %s",
       parameter_prefix_.c_str(),
       lidar_general_info_.port.c_str());
@@ -119,7 +129,7 @@ bool CoinD4Handler::init_lidar_port()
       Timeout::simpleTimeout(DEFAULT_TIMEOUT));
 
 	if (!serial_port_->open()) {
-    RCLCPP_ERROR(node_->get_logger(), "Failed to open lidar port");
+    RCLCPP_ERROR(logging_interface_->get_logger(), "Failed to open lidar port");
 		return false;
 	}
 
@@ -129,7 +139,7 @@ bool CoinD4Handler::init_lidar_port()
 	return true;
 }
 
-void CoinD4Handler::flush_serial()
+void CoinD4BaseHandler::flush_serial()
 {
 	if (!lidar_status_->isConnected){
 		return;
@@ -145,7 +155,7 @@ void CoinD4Handler::flush_serial()
 	sleep_ms(20);
 }
 
-void CoinD4Handler::activate_grab_thread()
+void CoinD4BaseHandler::activate_grab_thread()
 {
   if (!lidar_status_->isConnected){
 		return;
@@ -173,11 +183,11 @@ void CoinD4Handler::activate_grab_thread()
           if (!IS_OK(ans)) {
             if (current_times() - lidar_time_->system_start_time > 3000 ) {
               if (!lidar_status_->lidar_restart_try) {
-                RCLCPP_WARN(node_->get_logger(), "Tried to restart lidar");
+                RCLCPP_WARN(logging_interface_->get_logger(), "Tried to restart lidar");
                 lidar_status_->lidar_restart_try = true;
                 lidar_status_->lidar_trap_restart = true;
               } else{
-                RCLCPP_WARN(node_->get_logger(), "Detected lidar stuck");
+                RCLCPP_WARN(logging_interface_->get_logger(), "Detected lidar stuck");
                 lidar_status_->lidar_abnormal_state |= 0x01;
                 usleep(100);
               }
@@ -232,12 +242,12 @@ void CoinD4Handler::activate_grab_thread()
 
   lidar_status_->lidar_ready = true;
   RCLCPP_INFO(
-    node_->get_logger(),
+    logging_interface_->get_logger(),
     "Activated lidar grab thread for port %s",
     lidar_general_info_.port.c_str());
 }
 
-void CoinD4Handler::deactivate_grab_thread()
+void CoinD4BaseHandler::deactivate_grab_thread()
 {
   if (!lidar_status_->isConnected){
 		return;
@@ -253,17 +263,18 @@ void CoinD4Handler::deactivate_grab_thread()
   lidar_status_->lidar_trap_restart = false;
   serial_port_->write_data(end_lidar);
   RCLCPP_INFO(
-    node_->get_logger(),
+    logging_interface_->get_logger(),
     "Deactivated lidar grab thread for port %s",
     lidar_general_info_.port.c_str());
 }
 
-void CoinD4Handler::activate_publish_thread()
+void CoinD4BaseHandler::activate_publish_thread()
 {
   if (!lidar_status_->isConnected){
     return;
   }
   skip_publish_ = false;
+  activate_scan_publisher();
   publish_thread_ = std::thread(
     [this]() {
       while (!skip_publish_) {
@@ -273,7 +284,7 @@ void CoinD4Handler::activate_publish_thread()
 
           scan_msg->ranges.resize(scan.points.size());
           scan_msg->intensities.resize(scan.points.size());
-          scan_msg->header.stamp = node_->now();
+          scan_msg->header.stamp = get_node_time();
           scan_msg->header.frame_id = lidar_general_info_.frame_id;
 
           scan_msg->angle_min = scan.config.min_angle;
@@ -293,38 +304,39 @@ void CoinD4Handler::activate_publish_thread()
             }
           }
 
-          laser_scan_pub_->publish(std::move(scan_msg));
+          publish_scan(std::move(scan_msg));
         }
       }
       return;
     });
 
   RCLCPP_INFO(
-    node_->get_logger(),
+    logging_interface_->get_logger(),
     "Activated lidar publish thread for port %s",
     lidar_general_info_.port.c_str());
 }
 
-void CoinD4Handler::deactivate_publish_thread()
+void CoinD4BaseHandler::deactivate_publish_thread()
 {
   skip_publish_ = true;
   if (publish_thread_.joinable()) {
     publish_thread_.join();
   }
+  deactivate_scan_publisher();
   RCLCPP_INFO(
-    node_->get_logger(),
+    logging_interface_->get_logger(),
     "Deactivated lidar publish thread for port %s",
     lidar_general_info_.port.c_str());
 }
 
-bool CoinD4Handler::judge_lidar_state(bool & wait_speed_right, uint64_t & lidar_status_time)
+bool CoinD4BaseHandler::judge_lidar_state(bool & wait_speed_right, uint64_t & lidar_status_time)
 {
 	if (
     lidar_status_->lidar_ready != lidar_status_->lidar_last_status ||
     lidar_status_->close_lidar)
 	{
 		RCLCPP_INFO(
-      node_->get_logger(),
+      logging_interface_->get_logger(),
       "Lidar status changed for %s : %d -> %d",
       lidar_general_info_.port.c_str(),
       lidar_status_->lidar_last_status,
@@ -340,7 +352,7 @@ bool CoinD4Handler::judge_lidar_state(bool & wait_speed_right, uint64_t & lidar_
 	}
 	if (lidar_status_->lidar_trap_restart) {
 		RCLCPP_WARN(
-      node_->get_logger(),
+      logging_interface_->get_logger(),
       "Abnormal lidar status for %s",
       lidar_general_info_.port.c_str());
 
@@ -358,7 +370,7 @@ bool CoinD4Handler::judge_lidar_state(bool & wait_speed_right, uint64_t & lidar_
 			{
 				case M1C1_Mini_v1:
 					RCLCPP_INFO(
-            node_->get_logger(),
+            logging_interface_->get_logger(),
             "V1 version lidar start for %s",
             lidar_general_info_.port.c_str());
 					serial_port_->write_data(start_lidar);
@@ -367,7 +379,7 @@ bool CoinD4Handler::judge_lidar_state(bool & wait_speed_right, uint64_t & lidar_
 
 				case M1C1_Mini_v2:
 					RCLCPP_INFO(
-            node_->get_logger(),
+            logging_interface_->get_logger(),
             "V2 X2 version lidar start for %s",
             lidar_general_info_.port.c_str());
 					serial_port_->write_data(start_lidar);
@@ -376,7 +388,7 @@ bool CoinD4Handler::judge_lidar_state(bool & wait_speed_right, uint64_t & lidar_
 
 				case M1CT_TOF:
 					RCLCPP_INFO(
-            node_->get_logger(),
+            logging_interface_->get_logger(),
             "TOF version lidar start for %s",
             lidar_general_info_.port.c_str());
 					serial_port_->write_data(start_lidar);
@@ -394,7 +406,7 @@ bool CoinD4Handler::judge_lidar_state(bool & wait_speed_right, uint64_t & lidar_
 	return wait_speed_right;
 }
 
-bool CoinD4Handler::grab_synchronized_data(LaserScan & outscan)
+bool CoinD4BaseHandler::grab_synchronized_data(LaserScan & outscan)
 {
 	if (check_data_synchronization(2000) == RESULT_OK) {
 		parse_lidar_serial_data(outscan);
@@ -404,7 +416,7 @@ bool CoinD4Handler::grab_synchronized_data(LaserScan & outscan)
 	}
 }
 
-result_t CoinD4Handler::check_data_synchronization(uint32_t timeout) {
+result_t CoinD4BaseHandler::check_data_synchronization(uint32_t timeout) {
 	switch (data_event_.wait(timeout)) {
 		case Event::EVENT_TIMEOUT:
 			return RESULT_TIMEOUT;
@@ -424,7 +436,7 @@ result_t CoinD4Handler::check_data_synchronization(uint32_t timeout) {
 	}
 }
 
-void CoinD4Handler::parse_lidar_serial_data(LaserScan & outscan)
+void CoinD4BaseHandler::parse_lidar_serial_data(LaserScan & outscan)
 {
 	lock_.lock();
 

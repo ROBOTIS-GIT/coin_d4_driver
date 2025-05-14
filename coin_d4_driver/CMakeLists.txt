@@ -11,6 +11,7 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
@@ -23,7 +24,9 @@ set(LIBRARY_SRC
   src/lidar_sdk/mtime.cpp
   src/lidar_sdk/serial_port.cpp
   src/lidar_sdk/timer.cpp
-  src/coin_d4_handler.cpp)
+  src/coin_d4_base_handler.cpp
+  src/coin_d4_lifecycle_handler.cpp
+  src/coin_d4_node_handler.cpp)
 
 add_library(${PROJECT_NAME}_lib SHARED ${LIBRARY_SRC})
 target_include_directories(${PROJECT_NAME}_lib PUBLIC
@@ -38,6 +41,7 @@ ament_target_dependencies(
   rclcpp
   sensor_msgs
   geometry_msgs
+  rclcpp_lifecycle
 )
 
 target_link_libraries(single_coin_d4_node
@@ -81,8 +85,10 @@ ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME}_lib)
 ament_export_targets(export_${PROJECT_NAME})
 
+ament_export_dependencies(ament_cmake)
 ament_export_dependencies(rclcpp)
 ament_export_dependencies(sensor_msgs)
 ament_export_dependencies(geometry_msgs)
+ament_export_dependencies(rclcpp_lifecycle)
 
 ament_package()

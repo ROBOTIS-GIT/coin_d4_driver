@@ -10,7 +10,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "coin_d4_driver/coin_d4_handler.hpp"
+#include "coin_d4_driver/coin_d4_node_handler.hpp"
 
 
 namespace robotis
@@ -24,7 +24,7 @@ public:
   virtual ~MultiCoinD4Node();
 
 private:
-  std::unordered_map<std::string, std::shared_ptr<CoinD4Handler>> handlers_;
+  std::unordered_map<std::string, std::shared_ptr<CoinD4NodeHandler>> handlers_;
 };
 }  // namespace coin_d4
 }  // namespace robotis

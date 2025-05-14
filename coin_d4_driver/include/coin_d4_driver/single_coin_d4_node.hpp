@@ -8,7 +8,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "coin_d4_driver/coin_d4_handler.hpp"
+#include "coin_d4_driver/coin_d4_node_handler.hpp"
 
 
 namespace robotis
@@ -22,7 +22,7 @@ public:
   virtual ~SingleCoinD4Node();
 
 private:
-  std::unique_ptr<CoinD4Handler> handler_;
+  std::unique_ptr<CoinD4NodeHandler> handler_;
 };
 }  // namespace coin_d4
 }  // namespace robotis

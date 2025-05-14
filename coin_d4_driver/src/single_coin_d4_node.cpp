@@ -11,7 +11,7 @@ namespace coin_d4
 SingleCoinD4Node::SingleCoinD4Node(const rclcpp::NodeOptions & options)
 : Node("lidar_node", options)
 {
-  handler_ = std::make_unique<CoinD4Handler>("", this);
+  handler_ = std::make_unique<CoinD4NodeHandler>("", this);
 	handler_->activate_grab_thread();
   handler_->activate_publish_thread();
 }

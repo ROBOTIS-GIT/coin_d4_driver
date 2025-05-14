@@ -1,8 +1,8 @@
 // Copyright 2025 ROBOTIS CO., LTD.
 // Authors: Hyeongjun Jeon
 
-#ifndef COIN_D4_LIDAR__COIN_D4_HANDLER_HPP_
-#define COIN_D4_LIDAR__COIN_D4_HANDLER_HPP_
+#ifndef COIN_D4_LIDAR__COIN_D4_BASE_HANDLER_HPP_
+#define COIN_D4_LIDAR__COIN_D4_BASE_HANDLER_HPP_
 
 #include <atomic>
 #include <memory>
@@ -22,13 +22,14 @@ namespace robotis
 {
 namespace coin_d4
 {
-class CoinD4Handler
+class CoinD4BaseHandler
 {
 public:
-  CoinD4Handler(
+  CoinD4BaseHandler(
     const std::string parameter_prefix,
-    rclcpp::Node * node);
-  ~CoinD4Handler();
+    const rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr & logging_interface,
+    const rclcpp::node_interfaces::NodeParametersInterface::SharedPtr & params_interface);
+  virtual ~CoinD4BaseHandler();
 
   void activate_grab_thread();
   void deactivate_grab_thread();
@@ -51,18 +52,17 @@ private:
     const rcl_interfaces::msg::ParameterDescriptor & parameter_descriptor =
     rcl_interfaces::msg::ParameterDescriptor())
   {
-    if (node_->has_parameter(name) == false) {
-      return node_->declare_parameter(
+    if (params_interface_->has_parameter(name) == false) {
+      return params_interface_->declare_parameter(
         name,
         rclcpp::ParameterValue(default_value),
         parameter_descriptor
       ).get<ParameterT>();
     }
-    return node_->get_parameter(name).get_value<ParameterT>();
+    return params_interface_->get_parameter(name).get_value<ParameterT>();
   }
 
   const std::string parameter_prefix_;
-  rclcpp::Node * node_;
 
   // handling variables
   node_info * scan_node_buf_;
@@ -70,7 +70,6 @@ private:
   std::shared_ptr<LidarHardwareStatus> lidar_status_;
 
   LidarPackage scan_packages_;
-  LidarGeneralInfo lidar_general_info_;
 
   size_t scan_node_count_ = 0;
 
@@ -84,8 +83,19 @@ private:
 
   std::thread publish_thread_;
   std::atomic_bool skip_publish_ = {false};
-  rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr laser_scan_pub_;
+
+protected:
+  virtual rclcpp::Time get_node_time() = 0;
+  virtual void make_scan_publisher(const std::string & topic_name) = 0;
+  virtual void publish_scan(std::unique_ptr<sensor_msgs::msg::LaserScan> && scan_msg) = 0;
+  virtual void activate_scan_publisher() = 0;
+  virtual void deactivate_scan_publisher() = 0;
+
+  rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_interface_;
+  rclcpp::node_interfaces::NodeParametersInterface::SharedPtr params_interface_;
+
+  LidarGeneralInfo lidar_general_info_;
 };
 }  // namespace coin_d4
 }  // namespace robotis
-#endif  // COIN_D4_LIDAR__COIN_D4_HANDLER_HPP_
+#endif  // COIN_D4_LIDAR__COIN_D4_BASE_HANDLER_HPP_
