@@ -47,6 +47,10 @@ target_link_libraries(multi_coin_d4_node
   ${PROJECT_NAME}_lib
 )
 
+install(DIRECTORY include/
+  DESTINATION include
+)
+
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
 )
