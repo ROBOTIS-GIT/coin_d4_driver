@@ -16,12 +16,10 @@ MultiCoinD4Node::MultiCoinD4Node(const rclcpp::NodeOptions & options)
     std::vector<std::string>({"lidar_0"}));
   std::vector<std::string> lidar_list;
   this->get_parameter("lidar_list", lidar_list);
-  for (const auto & lidar : lidar_list)
-  {
+  for (const auto & lidar : lidar_list) {
     handlers_[lidar] = std::make_shared<CoinD4Handler>(lidar + ".", this);
   }
-  for (auto & handler : handlers_)
-  {
+  for (auto & handler : handlers_) {
     handler.second->activate_grab_thread();
     handler.second->activate_publish_thread();
   }
@@ -29,13 +27,11 @@ MultiCoinD4Node::MultiCoinD4Node(const rclcpp::NodeOptions & options)
 
 MultiCoinD4Node::~MultiCoinD4Node()
 {
-  for (auto & handler : handlers_)
-  {
+  for (auto & handler : handlers_) {
     handler.second->deactivate_publish_thread();
     handler.second->deactivate_grab_thread();
   }
-  for (auto & handler : handlers_)
-  {
+  for (auto & handler : handlers_) {
     handler.second.reset();
   }
 }
