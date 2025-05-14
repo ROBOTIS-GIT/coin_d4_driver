@@ -1,5 +1,5 @@
-#ifndef COIN_D4_LIDAR__LIDAR_SDK__NODE_SERIAL_H_
-#define COIN_D4_LIDAR__LIDAR_SDK__NODE_SERIAL_H_
+#ifndef COIN_D4_DRIVER__LIDAR_SDK__NODE_SERIAL_H_
+#define COIN_D4_DRIVER__LIDAR_SDK__NODE_SERIAL_H_
 
 #include <stdint.h>
 #include <vector>
@@ -151,4 +151,4 @@ public:
 
 };
 
-#endif  // COIN_D4_LIDAR__LIDAR_SDK__NODE_SERIAL_H_
+#endif  // COIN_D4_DRIVER__LIDAR_SDK__NODE_SERIAL_H_

@@ -1,5 +1,5 @@
-#ifndef COIN_D4_LIDAR__LIDAR_SDK__LIDAR_INFORMATION_H_
-#define COIN_D4_LIDAR__LIDAR_SDK__LIDAR_INFORMATION_H_
+#ifndef COIN_D4_DRIVER__LIDAR_SDK__LIDAR_INFORMATION_H_
+#define COIN_D4_DRIVER__LIDAR_SDK__LIDAR_INFORMATION_H_
 
 #include <stdint.h>
 #include <vector>
@@ -234,4 +234,4 @@ struct LaserScan
     return *this;
   }
 };
-#endif  // COIN_D4_LIDAR__LIDAR_SDK__LIDAR_INFORMATION_H_
+#endif  // COIN_D4_DRIVER__LIDAR_SDK__LIDAR_INFORMATION_H_

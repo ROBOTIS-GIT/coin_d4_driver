@@ -24,12 +24,12 @@ Lidar_Data_Processing::Lidar_Data_Processing(
   Valu8Tou16 = 0;
   package_Sample_Index = 0;
   FirstSampleAngle = 0; //< 起始采样角
-	LastSampleAngle = 0;  //< 结束采样角
+  LastSampleAngle = 0;  //< 结束采样角
   scan_frequence = 0;	      //协议中雷达转速
   CheckSumResult = false;
   has_package_error = false;
   IntervalSampleAngle = 0.0;
-	IntervalSampleAngle_LastPackage = 0.0;
+  IntervalSampleAngle_LastPackage = 0.0;
   PackageSampleBytes = 2; //< 一个包包含的激光点数
   package_index = 0;
   recvNodeCount = 0;
@@ -44,10 +44,10 @@ Lidar_Data_Processing::Lidar_Data_Processing(
 Lidar_Data_Processing::~Lidar_Data_Processing()
 {
   if (globalRecvBuffer)
-	{
-		delete[] globalRecvBuffer;
-		globalRecvBuffer = NULL;
-	}
+  {
+    delete[] globalRecvBuffer;
+    globalRecvBuffer = NULL;
+  }
 }
 
 void Lidar_Data_Processing::set_serial_port(Serial_Port * serial_port)
@@ -63,22 +63,22 @@ result_t Lidar_Data_Processing::sendCommand(uint8_t cmd)
 {
   uint8_t pkt_header[10];
 
-	switch (cmd)
-	{
-	  case 0x60:
-		  break;
-	  case 0x65:
-		  break;
-	  case 0x63:
+  switch (cmd)
+  {
+    case 0x60:
+      break;
+    case 0x65:
+      break;
+    case 0x63:
       pkt_header[0]=0xAA;
       pkt_header[1]=0x55;
       pkt_header[2]=0xF0;
       pkt_header[3]=0x0F;
       serial_port_->write_data(pkt_header,4);
-		break;
-	default:
-		break;
-	}
+    break;
+  default:
+    break;
+  }
   //add by jiang
   return 0;
 }

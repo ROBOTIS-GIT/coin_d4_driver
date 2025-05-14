@@ -1,8 +1,8 @@
 // Copyright 2025 ROBOTIS CO., LTD.
 // Authors: Hyeongjun Jeon
 
-#ifndef COIN_D4_LIDAR__LIDAR_SDK__HANDLING_INFO_HPP_
-#define COIN_D4_LIDAR__LIDAR_SDK__HANDLING_INFO_HPP_
+#ifndef COIN_D4_DRIVER__LIDAR_SDK__HANDLING_INFO_HPP_
+#define COIN_D4_DRIVER__LIDAR_SDK__HANDLING_INFO_HPP_
 
 #include <string>
 #include <vector>
@@ -16,9 +16,9 @@
 
 struct LidarGeneralInfo
 {
-  int version = 1; // lidar version
-  std::string port = "/dev/sc_mini"; // serial port name
-  int m_SerialBaudrate = 230400; // baud rate
+  int version = 1;  // lidar version
+  std::string port = "/dev/sc_mini";  // serial port name
+  int m_SerialBaudrate = 230400;  // baud rate
   bool m_intensities = false;
   uint64_t m_PointTime = 1e9/5000;
   uint32_t trans_delay = 0;
@@ -63,9 +63,9 @@ struct LidarTimeStatus
 // LiDAR hardware status
 struct LidarHardwareStatus
 {
-  bool FilterEnable = true;           //是否需要滤波
-  bool GyroCompensateEnable = false; //是否要做旋转角度补偿
-  bool isConnected = false;          //串口连接状体
+  bool FilterEnable = true;           // 是否需要滤波
+  bool GyroCompensateEnable = false; // 是否要做旋转角度补偿
+  bool isConnected = false;          // 串口连接状体
   bool slam_user = false;
   bool encry_lidar = false;
   bool optimize_enable = true;
@@ -82,4 +82,4 @@ struct LidarHardwareStatus
 
   uint8_t lidar_abnormal_state = 0;
 };
-#endif  // COIN_D4_LIDAR__LIDAR_SDK__HANDLING_INFO_HPP_
+#endif  // COIN_D4_DRIVER__LIDAR_SDK__HANDLING_INFO_HPP_

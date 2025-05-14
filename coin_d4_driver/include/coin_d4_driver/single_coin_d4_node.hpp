@@ -1,8 +1,8 @@
 // Copyright 2025 ROBOTIS CO., LTD.
 // Authors: Hyeongjun Jeon
 
-#ifndef COIN_D4_LIDAR__SINGLE_COIN_D4_NODE_HPP_
-#define COIN_D4_LIDAR__SINGLE_COIN_D4_NODE_HPP_
+#ifndef COIN_D4_DRIVER__SINGLE_COIN_D4_NODE_HPP_
+#define COIN_D4_DRIVER__SINGLE_COIN_D4_NODE_HPP_
 
 #include <memory>
 
@@ -26,4 +26,4 @@ private:
 };
 }  // namespace coin_d4
 }  // namespace robotis
-#endif  // COIN_D4_LIDAR__SINGLE_COIN_D4_NODE_HPP_
+#endif  // COIN_D4_DRIVER__SINGLE_COIN_D4_NODE_HPP_

@@ -1,8 +1,8 @@
 // Copyright 2025 ROBOTIS CO., LTD.
 // Authors: Hyeongjun Jeon
 
-#ifndef COIN_D4_LIDAR__COIN_D4_BASE_HANDLER_HPP_
-#define COIN_D4_LIDAR__COIN_D4_BASE_HANDLER_HPP_
+#ifndef COIN_D4_DRIVER__COIN_D4_BASE_HANDLER_HPP_
+#define COIN_D4_DRIVER__COIN_D4_BASE_HANDLER_HPP_
 
 #include <atomic>
 #include <memory>
@@ -98,4 +98,4 @@ protected:
 };
 }  // namespace coin_d4
 }  // namespace robotis
-#endif  // COIN_D4_LIDAR__COIN_D4_BASE_HANDLER_HPP_
+#endif  // COIN_D4_DRIVER__COIN_D4_BASE_HANDLER_HPP_

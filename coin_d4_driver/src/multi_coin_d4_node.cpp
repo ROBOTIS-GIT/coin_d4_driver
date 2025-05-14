@@ -40,10 +40,10 @@ MultiCoinD4Node::~MultiCoinD4Node()
 
 int main(int argc, char ** argv)
 {
-	rclcpp::init(argc, argv);
+  rclcpp::init(argc, argv);
   rclcpp::NodeOptions options;
   auto node = std::make_shared<robotis::coin_d4::MultiCoinD4Node>(options);
   rclcpp::spin(node);
   rclcpp::shutdown();
-	return 0;
+  return 0;
 }

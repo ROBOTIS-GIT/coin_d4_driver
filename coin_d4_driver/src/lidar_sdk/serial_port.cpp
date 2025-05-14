@@ -30,7 +30,7 @@ struct termios2 {
 Serial_Port::Serial_Port(const string &port, uint32_t baudrate, Timeout timeout,
                bytesize_t bytesize, parity_t parity, stopbits_t stopbits,
                flowcontrol_t flowcontrol)
-	:port_(port),baudrate_(baudrate),timeout_(timeout),bytesize_(bytesize),parity_(parity),stopbits_(stopbits),flowcontrol_(flowcontrol){
+  :port_(port),baudrate_(baudrate),timeout_(timeout),bytesize_(bytesize),parity_(parity),stopbits_(stopbits),flowcontrol_(flowcontrol){
 
 }
 
@@ -40,292 +40,292 @@ Serial_Port::~Serial_Port(){
 
 MillisecondTimer::MillisecondTimer(const uint64_t millis) : expiry(timespec_now())
 {
-	int64_t tv_nsec = expiry.tv_nsec + (millis * 1e6);
+  int64_t tv_nsec = expiry.tv_nsec + (millis * 1e6);
 
-	if (tv_nsec >= 1e9)
-	{
-		int64_t sec_diff = tv_nsec / static_cast<int>(1e9);
-		expiry.tv_nsec = tv_nsec % static_cast<int>(1e9);
-		expiry.tv_sec += sec_diff;
-	}
-	else
-	{
-		expiry.tv_nsec = tv_nsec;
-	}
+  if (tv_nsec >= 1e9)
+  {
+    int64_t sec_diff = tv_nsec / static_cast<int>(1e9);
+    expiry.tv_nsec = tv_nsec % static_cast<int>(1e9);
+    expiry.tv_sec += sec_diff;
+  }
+  else
+  {
+    expiry.tv_nsec = tv_nsec;
+  }
 }
 
 int64_t MillisecondTimer::remaining()
 {
-	timespec now(timespec_now());
-	int64_t millis = (expiry.tv_sec - now.tv_sec) * 1e3;
-	millis += (expiry.tv_nsec - now.tv_nsec) / 1e6;
-	return millis;
+  timespec now(timespec_now());
+  int64_t millis = (expiry.tv_sec - now.tv_sec) * 1e3;
+  millis += (expiry.tv_nsec - now.tv_nsec) / 1e6;
+  return millis;
 }
 
 timespec MillisecondTimer::timespec_now()
 {
-	timespec time;
-	clock_gettime(CLOCK_MONOTONIC, &time);
-	return time;
+  timespec time;
+  clock_gettime(CLOCK_MONOTONIC, &time);
+  return time;
 }
 
 timespec timespec_from_ms(const uint32_t millis)
 {
-	timespec time;
-	time.tv_sec = millis / 1e3;
-	time.tv_nsec = (millis - (time.tv_sec * 1e3)) * 1e6;
-	return time;
+  timespec time;
+  time.tv_sec = millis / 1e3;
+  time.tv_nsec = (millis - (time.tv_sec * 1e3)) * 1e6;
+  return time;
 }
 
 result_t Serial_Port::waitForData(size_t data_count, uint64_t timeout, size_t *returned_size)
 {
-	if(!is_open_)
-	{
-		return RESULT_FAIL;
-	}
+  if(!is_open_)
+  {
+    return RESULT_FAIL;
+  }
 
-	size_t length = 0;
+  size_t length = 0;
 
-	if (returned_size == NULL)
-	{
-		returned_size = (size_t *)&length;
-	}
+  if (returned_size == NULL)
+  {
+    returned_size = (size_t *)&length;
+  }
 
-	*returned_size = 0;
+  *returned_size = 0;
 
-	if (is_open_)
-	{
-    	/*得到缓冲区里有多少字节*/
-		if (ioctl(fd_, FIONREAD, returned_size) == -1) {
-			printf("ioctl return value is -1\n");
-			return RESULT_FAIL;
-		}
-		if (*returned_size >= data_count)
-		{
-			return RESULT_OK;
-		}
-	}
+  if (is_open_)
+  {
+      /*得到缓冲区里有多少字节*/
+    if (ioctl(fd_, FIONREAD, returned_size) == -1) {
+      printf("ioctl return value is -1\n");
+      return RESULT_FAIL;
+    }
+    if (*returned_size >= data_count)
+    {
+      return RESULT_OK;
+    }
+  }
 
-	fd_set readfds;
-	/*将set清零使集合中不含任何fd*/
-	FD_ZERO(&readfds);
-	/*将fd_加入set集合*/
-	FD_SET(fd_, &readfds);
+  fd_set readfds;
+  /*将set清零使集合中不含任何fd*/
+  FD_ZERO(&readfds);
+  /*将fd_加入set集合*/
+  FD_SET(fd_, &readfds);
 
-	MillisecondTimer total_timeout(timeout);
+  MillisecondTimer total_timeout(timeout);
 
-	while (is_open_) {
-		int64_t timeout_remaining_ms = total_timeout.remaining();
+  while (is_open_) {
+    int64_t timeout_remaining_ms = total_timeout.remaining();
 
-		if ((timeout_remaining_ms <= 0))
-		{
-			return RESULT_TIMEOUT;
-		}
+    if ((timeout_remaining_ms <= 0))
+    {
+      return RESULT_TIMEOUT;
+    }
 
-		timespec timeout_val(timespec_from_ms(timeout_remaining_ms));
+    timespec timeout_val(timespec_from_ms(timeout_remaining_ms));
 
-		/*检查文件描述符是否就绪*/
-		int n = pselect(fd_+1, &readfds, NULL, NULL, &timeout_val,NULL);
+    /*检查文件描述符是否就绪*/
+    int n = pselect(fd_+1, &readfds, NULL, NULL, &timeout_val,NULL);
 
-		if (n < 0)
-		{
-			if (errno == EINTR)
-			{
-				return RESULT_TIMEOUT;
-			}
-			printf("n is lower than zero\n");
-			return RESULT_FAIL;
-		}
-		else if (n == 0)
-		{
-			return RESULT_TIMEOUT;
-		}
-		else
-		{
-			/*调用select后，检查fd_是否在set集合中*/
-			if(FD_ISSET(fd_, &readfds)){
-				if(ioctl(fd_, FIONREAD, returned_size)<0){
-					printf("ioctl return value is lower than zero\n");
-					return RESULT_FAIL;
-				}
+    if (n < 0)
+    {
+      if (errno == EINTR)
+      {
+        return RESULT_TIMEOUT;
+      }
+      printf("n is lower than zero\n");
+      return RESULT_FAIL;
+    }
+    else if (n == 0)
+    {
+      return RESULT_TIMEOUT;
+    }
+    else
+    {
+      /*调用select后，检查fd_是否在set集合中*/
+      if(FD_ISSET(fd_, &readfds)){
+        if(ioctl(fd_, FIONREAD, returned_size)<0){
+          printf("ioctl return value is lower than zero\n");
+          return RESULT_FAIL;
+        }
 
-				if (*returned_size >= data_count)
-				{
-					return RESULT_OK;
-				}else{
-					int remain_timeout = timeout_val.tv_sec * 1000000 + timeout_val.tv_nsec /1000;
-					int expect_remain_time = (data_count - *returned_size) * 1000000 * 8 / baudrate_;
-					if (remain_timeout > expect_remain_time)
-					{
-						usleep(expect_remain_time);
-					}
-				}
-			}else{
-				usleep(30);
-			}
-		}
-	}
-	return RESULT_FAIL;
+        if (*returned_size >= data_count)
+        {
+          return RESULT_OK;
+        }else{
+          int remain_timeout = timeout_val.tv_sec * 1000000 + timeout_val.tv_nsec /1000;
+          int expect_remain_time = (data_count - *returned_size) * 1000000 * 8 / baudrate_;
+          if (remain_timeout > expect_remain_time)
+          {
+            usleep(expect_remain_time);
+          }
+        }
+      }else{
+        usleep(30);
+      }
+    }
+  }
+  return RESULT_FAIL;
 }
 
 bool Serial_Port::waitReadable(uint32_t timeout_t)
 {
-	// Setup a select call to block for serial data or a timeout
-	fd_set readfds;
-	FD_ZERO(&readfds);
-	FD_SET(fd_, &readfds);
-	timespec timeout_ts(timespec_from_ms(timeout_t));
-	int r = pselect(fd_ + 1, &readfds, NULL, NULL, &timeout_ts, NULL);
+  // Setup a select call to block for serial data or a timeout
+  fd_set readfds;
+  FD_ZERO(&readfds);
+  FD_SET(fd_, &readfds);
+  timespec timeout_ts(timespec_from_ms(timeout_t));
+  int r = pselect(fd_ + 1, &readfds, NULL, NULL, &timeout_ts, NULL);
 
-	if (r < 0)
-	{
-		// Select was interrupted
-		if (errno == EINTR)
-		{
-			return false;
-		}
+  if (r < 0)
+  {
+    // Select was interrupted
+    if (errno == EINTR)
+    {
+      return false;
+    }
 
-		// Otherwise there was some error
-		return false;
-	}
+    // Otherwise there was some error
+    return false;
+  }
 
-	// Timeout occurred
-	if (r == 0)
-	{
-		return false;
-	}
+  // Timeout occurred
+  if (r == 0)
+  {
+    return false;
+  }
 
-	// This shouldn't happen, if r > 0 our fd has to be in the list!
-	if (!FD_ISSET(fd_, &readfds))
-	{
-		return false;
-	}
+  // This shouldn't happen, if r > 0 our fd has to be in the list!
+  if (!FD_ISSET(fd_, &readfds))
+  {
+    return false;
+  }
 
-	// Data available to read.
-	return true;
+  // Data available to read.
+  return true;
 }
 
 size_t Serial_Port::available()
 {
-	if (!is_open_)
-	{
-		return 0;
-	}
+  if (!is_open_)
+  {
+    return 0;
+  }
 
-	int count = 0;
+  int count = 0;
 
-	if (-1 == ioctl(fd_, TIOCINQ, &count))
-	{
-		return 0;
-	}else{
-		return static_cast<size_t>(count);
-	}
+  if (-1 == ioctl(fd_, TIOCINQ, &count))
+  {
+    return 0;
+  }else{
+    return static_cast<size_t>(count);
+  }
 }
 
 uint32_t byte_time_ns_;
 
 void waitByteTimes(size_t count)
 {
-	timespec wait_time = {0, static_cast<long>(byte_time_ns_ * count)};
-	pselect(0, NULL, NULL, NULL, &wait_time, NULL);
+  timespec wait_time = {0, static_cast<long>(byte_time_ns_ * count)};
+  pselect(0, NULL, NULL, NULL, &wait_time, NULL);
 }
 
 result_t Serial_Port::read_data(uint8_t *buf, size_t size)
 {
-	// If the port is not open, throw
-	if (!is_open_)
-	{
-		return 0;
-	}
+  // If the port is not open, throw
+  if (!is_open_)
+  {
+    return 0;
+  }
 
-	Timeout timeout_;
+  Timeout timeout_;
 
-	size_t bytes_read = 0;
+  size_t bytes_read = 0;
 
-	// Calculate total timeout in milliseconds t_c + (t_m * N)
-	long total_timeout_ms = timeout_.read_timeout_constant;
-	total_timeout_ms += timeout_.read_timeout_multiplier * static_cast<long>(size);
-	MillisecondTimer total_timeout(total_timeout_ms);
+  // Calculate total timeout in milliseconds t_c + (t_m * N)
+  long total_timeout_ms = timeout_.read_timeout_constant;
+  total_timeout_ms += timeout_.read_timeout_multiplier * static_cast<long>(size);
+  MillisecondTimer total_timeout(total_timeout_ms);
 
-	// Pre-fill buffer with available bytes
-	{
-		ssize_t bytes_read_now = ::read(fd_, buf, size);
+  // Pre-fill buffer with available bytes
+  {
+    ssize_t bytes_read_now = ::read(fd_, buf, size);
 
-		if (bytes_read_now > 0)
-		{
-			bytes_read = bytes_read_now;
-		}
-	}
+    if (bytes_read_now > 0)
+    {
+      bytes_read = bytes_read_now;
+    }
+  }
 
-	while (bytes_read < size)
-	{
-		int64_t timeout_remaining_ms = total_timeout.remaining();
+  while (bytes_read < size)
+  {
+    int64_t timeout_remaining_ms = total_timeout.remaining();
 
-		if (timeout_remaining_ms <= 0)
-		{
-			// Timed out
-			break;
-		}
+    if (timeout_remaining_ms <= 0)
+    {
+      // Timed out
+      break;
+    }
 
-		// Timeout for the next select is whichever is less of the remaining
-		// total read timeout and the inter-byte timeout.
-		uint32_t timeout_t = std::min(static_cast<uint32_t>(timeout_remaining_ms),
-									  timeout_.inter_byte_timeout);
+    // Timeout for the next select is whichever is less of the remaining
+    // total read timeout and the inter-byte timeout.
+    uint32_t timeout_t = std::min(static_cast<uint32_t>(timeout_remaining_ms),
+                    timeout_.inter_byte_timeout);
 
-		// Wait for the device to be readable, and then attempt to read.
-		if (waitReadable(timeout_t))
-		{
-			// If it's a fixed-length multi-byte read, insert a wait here so that
-			// we can attempt to grab the whole thing in a single IO call. Skip
-			// this wait if a non-max inter_byte_timeout is specified.
-			if (size > 1 && timeout_.inter_byte_timeout == Timeout::max())
-			{
-				size_t bytes_available = available();
+    // Wait for the device to be readable, and then attempt to read.
+    if (waitReadable(timeout_t))
+    {
+      // If it's a fixed-length multi-byte read, insert a wait here so that
+      // we can attempt to grab the whole thing in a single IO call. Skip
+      // this wait if a non-max inter_byte_timeout is specified.
+      if (size > 1 && timeout_.inter_byte_timeout == Timeout::max())
+      {
+        size_t bytes_available = available();
 
-				if (bytes_available + bytes_read < size)
-				{
-					waitByteTimes(size - (bytes_available + bytes_read));
-				}
-			}
+        if (bytes_available + bytes_read < size)
+        {
+          waitByteTimes(size - (bytes_available + bytes_read));
+        }
+      }
 
-			// This should be non-blocking returning only what is available now
-			//  Then returning so that select can block again.
-			ssize_t bytes_read_now = ::read(fd_, buf + bytes_read, size - bytes_read);
+      // This should be non-blocking returning only what is available now
+      //  Then returning so that select can block again.
+      ssize_t bytes_read_now = ::read(fd_, buf + bytes_read, size - bytes_read);
 
-			// read should always return some data as select reported it was
-			// ready to read when we get to this point.
-			if (bytes_read_now < 1)
-			{
-				// Disconnected devices, at least on Linux, show the
-				// behavior that they are always ready to read immediately
-				// but reading returns nothing.
-				continue;
-			}
+      // read should always return some data as select reported it was
+      // ready to read when we get to this point.
+      if (bytes_read_now < 1)
+      {
+        // Disconnected devices, at least on Linux, show the
+        // behavior that they are always ready to read immediately
+        // but reading returns nothing.
+        continue;
+      }
 
-			// Update bytes_read
-			bytes_read += static_cast<size_t>(bytes_read_now);
+      // Update bytes_read
+      bytes_read += static_cast<size_t>(bytes_read_now);
 
-			// If bytes_read == size then we have read everything we need
-			if (bytes_read == size)
-			{
-				break;
-			}
+      // If bytes_read == size then we have read everything we need
+      if (bytes_read == size)
+      {
+        break;
+      }
 
-			// If bytes_read < size then we have more to read
-			if (bytes_read < size)
-			{
-				continue;
-			}
+      // If bytes_read < size then we have more to read
+      if (bytes_read < size)
+      {
+        continue;
+      }
 
-			// If bytes_read > size then we have over read, which shouldn't happen
-			if (bytes_read > size)
-			{
-				break;
-			}
-		}
-	}
+      // If bytes_read > size then we have over read, which shouldn't happen
+      if (bytes_read > size)
+      {
+        break;
+      }
+    }
+  }
 
-	return bytes_read;
+  return bytes_read;
 }
 
 size_t Serial_Port::write_data(const uint8_t *data, size_t length) {
@@ -612,52 +612,52 @@ void Serial_Port::set_common_props(termios *tio) {
 
 bool Serial_Port::open() {
 
-	if (port_.empty()) {
-		return false;
-	}
+  if (port_.empty()) {
+    return false;
+  }
 
-	if (is_open_ == true) {
-		return true;
-	}
-	/*
-	pid = -1;
-	pid = getpid();
-	*/
-	fd_ = ::open(port_.c_str(),
-			O_RDWR | O_NOCTTY | O_NONBLOCK | O_APPEND | O_NDELAY);
+  if (is_open_ == true) {
+    return true;
+  }
+  /*
+  pid = -1;
+  pid = getpid();
+  */
+  fd_ = ::open(port_.c_str(),
+      O_RDWR | O_NOCTTY | O_NONBLOCK | O_APPEND | O_NDELAY);
 
-	if (fd_ == -1) {
-		return false;
-	}
-
-
-	termios tio;
-	if(!getTermios(&tio)){
-		close();
-		return false;
-	}
-
-	set_common_props(&tio);
-	set_databits(&tio, bytesize_);
-	set_parity(&tio, parity_);
-	set_stopbits(&tio, stopbits_);
-	set_flowcontrol(&tio, flowcontrol_);
-
-	if (!setTermios(&tio)) {
-    	close();
-    	return false;
-  	}
-	if (!setBaudrate(baudrate_)) {
-		return false;
-	}
-
-	// Update byte_time_ based on the new settings.
-	uint32_t bit_time_ns = 1e9 / baudrate_;
-	byte_time_ns_ = bit_time_ns * (1 + eightbits + parity_none + stopbits_one);
+  if (fd_ == -1) {
+    return false;
+  }
 
 
-	is_open_ = true;
-	return true;
+  termios tio;
+  if(!getTermios(&tio)){
+    close();
+    return false;
+  }
+
+  set_common_props(&tio);
+  set_databits(&tio, bytesize_);
+  set_parity(&tio, parity_);
+  set_stopbits(&tio, stopbits_);
+  set_flowcontrol(&tio, flowcontrol_);
+
+  if (!setTermios(&tio)) {
+      close();
+      return false;
+    }
+  if (!setBaudrate(baudrate_)) {
+    return false;
+  }
+
+  // Update byte_time_ based on the new settings.
+  uint32_t bit_time_ns = 1e9 / baudrate_;
+  byte_time_ns_ = bit_time_ns * (1 + eightbits + parity_none + stopbits_one);
+
+
+  is_open_ = true;
+  return true;
 }
 
 bool Serial_Port::setDTR(bool level) {
