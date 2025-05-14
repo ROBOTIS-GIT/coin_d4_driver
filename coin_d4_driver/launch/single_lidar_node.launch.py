@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+# Copyright 2025 ROBOTIS CO., LTD.
+# Authors: Hyeongjun Jeon
+
+import os
+
+from ament_index_python.packages import get_package_share_directory
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
+
+
+def generate_launch_description():
+
+    single_lidar_node_param = LaunchConfiguration('single_lidar_node_param')
+
+    declare_single_lidar_node_param = DeclareLaunchArgument(
+        name='single_lidar_node_param',
+        default_value=os.path.join(
+          get_package_share_directory('cspc_lidar'),
+          'params',
+          'single_lidar_node.yaml'))
+
+    single_coin_d4_node = Node(
+        package='cspc_lidar',
+        executable='single_coin_d4_node',
+        parameters=[single_lidar_node_param],
+        output='screen',
+        sigterm_timeout=LaunchConfiguration('sigterm_timeout', default=15),
+        sigkill_timeout=LaunchConfiguration('sigkill_timeout', default=15))
+
+    ld = LaunchDescription()
+
+    ld.add_action(declare_single_lidar_node_param)
+
+    ld.add_action(single_coin_d4_node)
+
+    return ld
