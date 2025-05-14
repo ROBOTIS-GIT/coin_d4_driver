@@ -18,12 +18,12 @@ def generate_launch_description():
     declare_single_lidar_node_param = DeclareLaunchArgument(
         name='single_lidar_node_param',
         default_value=os.path.join(
-          get_package_share_directory('cspc_lidar'),
+          get_package_share_directory('coin_d4_driver'),
           'params',
           'single_lidar_node.yaml'))
 
     single_coin_d4_node = Node(
-        package='cspc_lidar',
+        package='coin_d4_driver',
         executable='single_coin_d4_node',
         parameters=[single_lidar_node_param],
         output='screen',
