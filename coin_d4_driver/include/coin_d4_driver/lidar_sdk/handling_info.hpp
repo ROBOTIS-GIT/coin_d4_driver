@@ -27,6 +27,7 @@ struct LidarGeneralInfo
   uint16_t frequency_min = 97;
   std::string topic_name = "scan";
   bool reverse = false;
+  int warmup_time = 0;
 };
 
 // LiDAR block judgment

@@ -8,6 +8,7 @@
       version: 4
       topic_name: "sensor/msg/scan_0"
       reverse: True
+      warmup_time: 5  # seconds
     lidar_1:
       port: "/dev/ttyUSB2"
       frame_id: "laser_link"
@@ -15,3 +16,4 @@
       version: 4
       topic_name: "sensor/msg/scan_1"
       reverse: True
+      warmup_time: 5  # seconds

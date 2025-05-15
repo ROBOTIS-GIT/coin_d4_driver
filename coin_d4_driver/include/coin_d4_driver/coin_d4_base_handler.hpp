@@ -5,6 +5,7 @@
 #define COIN_D4_DRIVER__COIN_D4_BASE_HANDLER_HPP_
 
 #include <atomic>
+#include <chrono>
 #include <memory>
 #include <string>
 #include <thread>

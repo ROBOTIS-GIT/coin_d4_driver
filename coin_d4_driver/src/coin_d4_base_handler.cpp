@@ -1,8 +1,9 @@
 // Copyright 2025 ROBOTIS CO., LTD.
 // Authors: Hyeongjun Jeon
 
-#include <string>
+#include <chrono>
 #include <memory>
+#include <string>
 
 #include "coin_d4_driver/coin_d4_base_handler.hpp"
 
@@ -55,6 +56,8 @@ void CoinD4BaseHandler::init_structs()
     declare_parameter_once(parameter_prefix_ + "topic_name", "scan");
   lidar_general_info_.reverse =
     declare_parameter_once(parameter_prefix_ + "reverse", false);
+  lidar_general_info_.warmup_time =
+    declare_parameter_once(parameter_prefix_ + "warmup_time", 0);
   switch (lidar_general_info_.version)
   {
     case M1C1_Mini_v1:
@@ -277,6 +280,7 @@ void CoinD4BaseHandler::activate_publish_thread()
   activate_scan_publisher();
   publish_thread_ = std::thread(
     [this]() {
+      std::this_thread::sleep_for(std::chrono::seconds(lidar_general_info_.warmup_time));
       while (!skip_publish_) {
         LaserScan scan;
         if (grab_synchronized_data(scan)) {

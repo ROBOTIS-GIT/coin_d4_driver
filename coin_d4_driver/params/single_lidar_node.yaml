@@ -6,3 +6,4 @@
     version: 4
     topic_name: "sensor/msg/scan"
     reverse: True
+    warmup_time: 5  # seconds
