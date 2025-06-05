@@ -49,7 +49,7 @@ void CoinD4BaseHandler::init_structs()
   lidar_general_info_.port = declare_parameter_once(parameter_prefix_ + "port", "/dev/ttyUSB0");
   lidar_general_info_.frame_id =
     declare_parameter_once(parameter_prefix_ + "frame_id", "base_scan");
-  lidar_general_info_.m_SerialBaudrate =
+  lidar_general_info_.serial_baud_rate =
     declare_parameter_once(parameter_prefix_ + "baudrate", 230400);
   lidar_general_info_.version = declare_parameter_once(parameter_prefix_ + "version", 4);
   lidar_general_info_.topic_name =
@@ -62,24 +62,24 @@ void CoinD4BaseHandler::init_structs()
   {
     case M1C1_Mini_v1:
       RCLCPP_INFO(logging_interface_->get_logger(), "version M1C1_Mini_v1");
-      lidar_general_info_.m_SerialBaudrate = 115200;
+      lidar_general_info_.serial_baud_rate = 115200;
       break;
 
     case M1C1_Mini_v2:
       RCLCPP_INFO(logging_interface_->get_logger(), "version M1C1_Mini_v2");
-      lidar_general_info_.m_SerialBaudrate = 150000;
-      lidar_general_info_.m_intensities = true;
+      lidar_general_info_.serial_baud_rate = 150000;
+      lidar_general_info_.intensity_data_flag = true;
       break;
 
     case M1CT_Coin_Plus:
       RCLCPP_INFO(logging_interface_->get_logger(), "version M1CT_Coin_Plus");
-      lidar_general_info_.m_SerialBaudrate = 115200;
+      lidar_general_info_.serial_baud_rate = 115200;
       break;
 
     case M1CT_TOF:
       RCLCPP_INFO(logging_interface_->get_logger(), "version M1CT_TOF");
-      lidar_general_info_.m_SerialBaudrate = 230400;
-      lidar_general_info_.m_intensities = true;
+      lidar_general_info_.serial_baud_rate = 230400;
+      lidar_general_info_.intensity_data_flag = true;
       break;
 
     default:
@@ -128,7 +128,7 @@ bool CoinD4BaseHandler::init_lidar_port()
   serial_port_ =
     std::make_shared<Serial_Port>(
       lidar_general_info_.port,
-      lidar_general_info_.m_SerialBaudrate,
+      lidar_general_info_.serial_baud_rate,
       Timeout::simpleTimeout(DEFAULT_TIMEOUT));
 
   if (!serial_port_->open()) {

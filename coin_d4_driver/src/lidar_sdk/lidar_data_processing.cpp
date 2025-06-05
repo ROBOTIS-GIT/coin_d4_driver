@@ -35,9 +35,6 @@ Lidar_Data_Processing::Lidar_Data_Processing(
   recvNodeCount = 0;
   start_t = 0;
 
-  //uint64_t m_node_time_ns = current_times(TIME_NANOSECOND);			  //< time stamp
-  //uint64_t m_node_last_time_ns = current_times(TIME_NANOSECOND); //< time stamp
-  m_pointTime = 1e9 / 5000;
   globalRecvBuffer = new uint8_t[sizeof(node_packages)];
 }
 
@@ -266,7 +263,7 @@ result_t Lidar_Data_Processing::waitPackage(node_info *node, uint32_t timeout)
   uint32_t startTs = getms();
   uint32_t waitTime = 0;
   uint8_t *packageBuffer =
-    (lidar_general_info_.m_intensities) ?
+    (lidar_general_info_.intensity_data_flag) ?
     (uint8_t *)&scan_packages_.package.package_Head :
     (uint8_t *)&scan_packages_.packages.package_Head;
   uint8_t package_Sample_Num = 0;
@@ -453,7 +450,7 @@ result_t Lidar_Data_Processing::waitPackage(node_info *node, uint32_t timeout)
 
         for (size_t pos = 0; pos < recvSize; ++pos)
         {
-            if (lidar_general_info_.m_intensities) {
+            if (lidar_general_info_.intensity_data_flag) {
               if (recvPos % 3 == 2) {
                 Valu8Tou16 += globalRecvBuffer[pos] * 0x100;
                 CheckSumCal ^= Valu8Tou16;
@@ -505,7 +502,7 @@ result_t Lidar_Data_Processing::waitPackage(node_info *node, uint32_t timeout)
     }
   }
   uint8_t package_CT;
-  if(lidar_general_info_.m_intensities)
+  if(lidar_general_info_.intensity_data_flag)
   {
     package_CT = scan_packages_.package.package_CT;
   }else{
@@ -553,7 +550,7 @@ result_t Lidar_Data_Processing::waitPackage(node_info *node, uint32_t timeout)
 
   if (CheckSumResult)
   {
-    if(lidar_general_info_.m_intensities)
+    if(lidar_general_info_.intensity_data_flag)
     {
 
       (*node).distance_q2 = (scan_packages_.package.packageSampleDistance[package_Sample_Index*3+2] * 64) +
@@ -613,7 +610,7 @@ result_t Lidar_Data_Processing::waitPackage(node_info *node, uint32_t timeout)
 
   uint8_t nowPackageNum;
 
-  if(lidar_general_info_.m_intensities)
+  if(lidar_general_info_.intensity_data_flag)
   {
     nowPackageNum = scan_packages_.package.nowPackageNum;
   }else{
@@ -658,32 +655,30 @@ result_t Lidar_Data_Processing::waitScanData(node_info *nodebuffer, size_t &coun
 
     if (node.sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT)
     {
-      /*检查缓冲区中的字节数*/
       size_t size = serial_port_->available();
-      uint64_t delayTime = 0;
-      /*数据包的数据量*/
-      size_t PackageSize = (lidar_general_info_.m_intensities ? INTENSITY_NORMAL_PACKAGE_SIZE :
-                            NORMAL_PACKAGE_SIZE);
+      uint64_t delay_time = 0;
+      size_t package_size =
+        (lidar_general_info_.intensity_data_flag ? INTENSITY_NORMAL_PACKAGE_SIZE : NORMAL_PACKAGE_SIZE);
 
-      if (size > PackagePaidBytes && size < PackagePaidBytes * PackageSize)
+      if (size > PackagePaidBytes && size < PackagePaidBytes * package_size)
       {
-        size_t packageNum = size / PackageSize;
-        size_t Number = size % PackageSize;
-        delayTime = packageNum * lidar_general_info_.m_PointTime * PackageSize / 2;
+        size_t packageNum = size / package_size;
+        size_t Number = size % package_size;
+        delay_time = packageNum * lidar_general_info_.scan_time_increment * package_size / 2;
 
         if (Number > PackagePaidBytes)
         {
-          delayTime += lidar_general_info_.m_PointTime * ((Number - PackagePaidBytes) / 2);
+          delay_time += lidar_general_info_.scan_time_increment * ((Number - PackagePaidBytes) / 2);
         }
 
         size = Number;
 
         if (packageNum > 0 && Number == 0)
         {
-          size = PackageSize;
+          size = package_size;
         }
       }
-      nodebuffer[recvNodeCount - 1].stamp = size * trans_delay_ + delayTime;
+      nodebuffer[recvNodeCount - 1].stamp = size * trans_delay_ + delay_time;
       nodebuffer[recvNodeCount - 1].scan_frequence = node.scan_frequence;
       count = recvNodeCount;
       return RESULT_OK;

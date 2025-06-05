@@ -18,27 +18,15 @@ struct LidarGeneralInfo
 {
   int version = 1;  // lidar version
   std::string port = "/dev/sc_mini";  // serial port name
-  int m_SerialBaudrate = 230400;  // baud rate
-  bool m_intensities = false;
-  uint64_t m_PointTime = 1e9/5000;
-  uint32_t trans_delay = 0;
+  int serial_baud_rate = 230400;  // baud rate
+  bool intensity_data_flag = false;
+  uint64_t scan_time_increment = 1e9 / 5000;
   std::string frame_id = "laser_link";
   uint16_t frequency_max = 103;
   uint16_t frequency_min = 97;
   std::string topic_name = "scan";
   bool reverse = false;
   int warmup_time = 0;
-};
-
-// LiDAR block judgment
-struct LidarBlockInfo
-{
-  uint16_t point_check = 0;
-  uint16_t point_check_part = 0;
-  uint16_t point_check_all = 0;
-  int blocked_size = 0;
-  int lidar_zero_count = 0;
-  bool blocked_judge = true;
 };
 
 // LiDAR package info

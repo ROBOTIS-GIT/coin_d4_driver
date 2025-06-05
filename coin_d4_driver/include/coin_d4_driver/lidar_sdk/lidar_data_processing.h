@@ -36,7 +36,7 @@ private:
 
   uint64_t m_node_time_ns;			 //< time stamp
   uint64_t m_node_last_time_ns;  //< time stamp
-  uint32_t m_pointTime;				   //< two laser point time intervals
+  uint32_t scan_time_increment;				   //< two laser point time intervals
   size_t buffer_size = 0;
 
   uint8_t * globalRecvBuffer;
