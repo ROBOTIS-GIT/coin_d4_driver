@@ -317,14 +317,11 @@ result_t Lidar_Data_Processing::waitPackage(node_info *node, uint32_t timeout)
         case 2:
           SampleNumlAndCTCal = currentByte;
           package_type = currentByte & 0x01;
-          if ((package_type == CT_Normal) || (package_type == CT_RingStart))
-          {
-            if (package_type == CT_RingStart)
-            {
-              if(lidar_time_->tim_scan_start == 0)
-              {
+          if ((package_type == CT_Normal) || (package_type == CT_RingStart)) {
+            if (package_type == CT_RingStart) {
+              if (lidar_time_->tim_scan_start == 0) {
                 lidar_time_->tim_scan_start = getTime();
-              }else{
+              } else {
                 lidar_time_->tim_scan_end = getTime();
               }
               scan_frequence = (currentByte & 0xFE) >> 1;

@@ -40,7 +40,6 @@ struct LidarPackage
 // LiDAR time info
 struct LidarTimeStatus
 {
-  uint32_t scan_time_t = 0;
   uint64_t system_start_time = 0;
   uint64_t tim_scan_start = 0;
   uint64_t tim_scan_end = 0;
