@@ -10,10 +10,10 @@
 #include <string>
 #include <thread>
 
-#include "coin_d4_driver/lidar_sdk/lidar_data_processor.h"
-#include "coin_d4_driver/lidar_sdk/locker.h"
-#include "coin_d4_driver/lidar_sdk/mtime.h"
-#include "coin_d4_driver/lidar_sdk/serial_port.h"
+#include "coin_d4_driver/lidar_sdk/lidar_data_processor.hpp"
+#include "coin_d4_driver/lidar_sdk/locker.hpp"
+#include "coin_d4_driver/lidar_sdk/mtime.hpp"
+#include "coin_d4_driver/lidar_sdk/serial_port.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"

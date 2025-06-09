@@ -1,7 +1,7 @@
 // Copyright 2025 ROBOTIS CO., LTD.
 // Authors: Hyeongjun Jeon
 
-#include "coin_d4_driver/lidar_sdk/mtime.h"
+#include "coin_d4_driver/lidar_sdk/mtime.hpp"
 
 
 int64_t current_times(int precision)

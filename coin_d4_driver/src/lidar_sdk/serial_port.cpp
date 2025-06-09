@@ -12,7 +12,7 @@
 #include <linux/serial.h>
 #include <sys/ioctl.h>
 
-#include "coin_d4_driver/lidar_sdk/serial_port.h"
+#include "coin_d4_driver/lidar_sdk/serial_port.hpp"
 
 
 #define SNCCS 19

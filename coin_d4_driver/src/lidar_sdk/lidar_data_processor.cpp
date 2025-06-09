@@ -7,8 +7,9 @@
 #include <vector>
 #include <thread>
 
-#include "coin_d4_driver/lidar_sdk/lidar_data_processor.h"
-#include "coin_d4_driver/lidar_sdk/mtime.h"
+#include "coin_d4_driver/lidar_sdk/lidar_data_processor.hpp"
+#include "coin_d4_driver/lidar_sdk/mtime.hpp"
+
 
 LidarDataProcessor::LidarDataProcessor(
   LidarTimeStatus * lidar_time,

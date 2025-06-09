@@ -1,8 +1,8 @@
 // Copyright 2025 ROBOTIS CO., LTD.
 // Authors: Hyeongjun Jeon
 
-#ifndef COIN_D4_DRIVER__LIDAR_SDK__SERIAL_PORT_H_
-#define COIN_D4_DRIVER__LIDAR_SDK__SERIAL_PORT_H_
+#ifndef COIN_D4_DRIVER__LIDAR_SDK__SERIAL_PORT_HPP_
+#define COIN_D4_DRIVER__LIDAR_SDK__SERIAL_PORT_HPP_
 
 #include <stdint.h>
 #include <termios.h>
@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-#include "coin_d4_driver/lidar_sdk/lidar_information.h"
+#include "coin_d4_driver/lidar_sdk/lidar_information.hpp"
 
 
 class MillisecondTimer
@@ -146,4 +146,4 @@ public:
   bool waitReadable(uint32_t timeout_t);
 };
 
-#endif  // COIN_D4_DRIVER__LIDAR_SDK__SERIAL_PORT_H_
+#endif  // COIN_D4_DRIVER__LIDAR_SDK__SERIAL_PORT_HPP_

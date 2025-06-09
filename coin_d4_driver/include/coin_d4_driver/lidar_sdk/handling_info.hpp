@@ -10,8 +10,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 
-#include "coin_d4_driver/lidar_sdk/lidar_information.h"
-#include "coin_d4_driver/lidar_sdk/timer.h"
+#include "coin_d4_driver/lidar_sdk/lidar_information.hpp"
+#include "coin_d4_driver/lidar_sdk/timer.hpp"
 
 
 struct LidarGeneralInfo

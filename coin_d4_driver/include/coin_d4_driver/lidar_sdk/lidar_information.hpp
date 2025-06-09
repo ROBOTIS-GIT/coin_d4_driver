@@ -1,8 +1,8 @@
 // Copyright 2025 ROBOTIS CO., LTD.
 // Authors: Hyeongjun Jeon
 
-#ifndef COIN_D4_DRIVER__LIDAR_SDK__LIDAR_INFORMATION_H_
-#define COIN_D4_DRIVER__LIDAR_SDK__LIDAR_INFORMATION_H_
+#ifndef COIN_D4_DRIVER__LIDAR_SDK__LIDAR_INFORMATION_HPP_
+#define COIN_D4_DRIVER__LIDAR_SDK__LIDAR_INFORMATION_HPP_
 
 #include <stdint.h>
 #include <vector>
@@ -233,4 +233,4 @@ struct LaserScan
     return *this;
   }
 };
-#endif  // COIN_D4_DRIVER__LIDAR_SDK__LIDAR_INFORMATION_H_
+#endif  // COIN_D4_DRIVER__LIDAR_SDK__LIDAR_INFORMATION_HPP_

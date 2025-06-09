@@ -1,15 +1,15 @@
 // Copyright 2025 ROBOTIS CO., LTD.
 // Authors: Hyeongjun Jeon
 
-#ifndef COIN_D4_DRIVER__LIDAR_SDK__LIDAR_DATA_PROCESSOR_H_
-#define COIN_D4_DRIVER__LIDAR_SDK__LIDAR_DATA_PROCESSOR_H_
+#ifndef COIN_D4_DRIVER__LIDAR_SDK__LIDAR_DATA_PROCESSOR_HPP_
+#define COIN_D4_DRIVER__LIDAR_SDK__LIDAR_DATA_PROCESSOR_HPP_
 
 #include <stdint.h>
 
-#include "coin_d4_driver/lidar_sdk/lidar_information.h"
-#include "coin_d4_driver/lidar_sdk/mtime.h"
-#include "coin_d4_driver/lidar_sdk/serial_port.h"
-#include "coin_d4_driver/lidar_sdk/timer.h"
+#include "coin_d4_driver/lidar_sdk/lidar_information.hpp"
+#include "coin_d4_driver/lidar_sdk/mtime.hpp"
+#include "coin_d4_driver/lidar_sdk/serial_port.hpp"
+#include "coin_d4_driver/lidar_sdk/timer.hpp"
 #include "coin_d4_driver/lidar_sdk/handling_info.hpp"
 
 class LidarDataProcessor
@@ -74,4 +74,4 @@ public:
   result_t wait_package(node_info *node, uint32_t timeout = DEFAULT_TIMEOUT);
 };
 
-#endif  // COIN_D4_DRIVER__LIDAR_SDK__LIDAR_DATA_PROCESSOR_H_
+#endif  // COIN_D4_DRIVER__LIDAR_SDK__LIDAR_DATA_PROCESSOR_HPP_
