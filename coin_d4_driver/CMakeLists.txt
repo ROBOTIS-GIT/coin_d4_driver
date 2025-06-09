@@ -36,12 +36,12 @@ target_include_directories(${PROJECT_NAME}_lib PUBLIC
 add_executable(single_coin_d4_node src/single_coin_d4_node.cpp)
 add_executable(multi_coin_d4_node src/multi_coin_d4_node.cpp)
 
-ament_target_dependencies(
-  ${PROJECT_NAME}_lib
-  rclcpp
-  sensor_msgs
-  geometry_msgs
-  rclcpp_lifecycle
+target_link_libraries(${PROJECT_NAME}_lib
+  rclcpp::rclcpp
+  rclcpp_lifecycle::rclcpp_lifecycle
+  ${std_msgs_TARGETS}
+  ${sensor_msgs_TARGETS}
+  ${geometry_msgs_TARGETS}
 )
 
 target_link_libraries(single_coin_d4_node

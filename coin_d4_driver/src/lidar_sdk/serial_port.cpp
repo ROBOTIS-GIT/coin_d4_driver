@@ -553,7 +553,6 @@ bool SerialPort::setBaudrate(uint64_t baudrate)
   if (fd_ == -1) {
     return false;
   }
-  speed_t new_baud = static_cast<speed_t>(baudrate);
 
   return setCustomBaudRate(baudrate);
 }
