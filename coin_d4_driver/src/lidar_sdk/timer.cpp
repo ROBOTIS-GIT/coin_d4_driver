@@ -1,9 +1,12 @@
-#include <assert.h>
-#include <time.h>
-#include "sys/time.h"
+// Copyright 2025 ROBOTIS CO., LTD.
+// Authors: Hyeongjun Jeon
 
+#include <assert.h>
 #include <inttypes.h>
+#include <sys/time.h>
+#include <time.h>
 #include <unistd.h>
+
 
 #include "coin_d4_driver/lidar_sdk/timer.h"
 
@@ -43,7 +46,7 @@ void delay(uint32_t ms) {
   while (ms >= 1000) {
     usleep(1000 * 1000);
     ms -= 1000;
-  };
+  }
 
   if (ms != 0) {
     usleep(ms * 1000);

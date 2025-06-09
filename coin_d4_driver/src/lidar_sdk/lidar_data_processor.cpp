@@ -47,15 +47,12 @@ LidarDataProcessor::~LidarDataProcessor()
   }
 }
 
-void LidarDataProcessor::set_serial_port(Serial_Port * serial_port)
+void LidarDataProcessor::set_serial_port(SerialPort * serial_port)
 {
   serial_port_ = serial_port;
   trans_delay_ = serial_port_->getByteTime();
 }
 
-/************************************************************************/
-/*  向激光雷达发布控制指令　Issue control command to lidar                  */
-/************************************************************************/
 result_t LidarDataProcessor::send_command(uint8_t cmd)
 {
   uint8_t pkt_header[10];
@@ -75,13 +72,12 @@ result_t LidarDataProcessor::send_command(uint8_t cmd)
     default:
       break;
   }
-  //add by jiang
+
   return 0;
 }
 
 result_t LidarDataProcessor::send_data(const uint8_t *data, size_t size)
 {
-
   if (data == nullptr || size == 0) {
     return RESULT_FAIL;
   }
@@ -102,7 +98,6 @@ result_t LidarDataProcessor::send_data(const uint8_t *data, size_t size)
 }
 
 result_t LidarDataProcessor::wait_speed_right(uint8_t /*cmd*/, uint64_t timeout)
-// 'cmd' is unused, so use /*cmd*/ to avoid unused parameter warning
 {
   int recv_pos = 0;
   uint32_t start_ts = get_milliseconds();
@@ -493,12 +488,14 @@ result_t LidarDataProcessor::wait_package(node_info *node, uint32_t timeout)
     } else {
       node->distance_q2 = scan_packages_.packages.packageSampleDistance[package_sample_index_] >> 2;
       node->sync_quality =
-        static_cast<uint16_t>(scan_packages_.packages.packageSampleDistance[package_sample_index_] & 0x03);
+        static_cast<uint16_t>(
+          scan_packages_.packages.packageSampleDistance[package_sample_index_] & 0x03);
     }
 
     if (node->distance_q2 != 0) {
       angle_correct_for_distance =
-        static_cast<int32_t>(atan(19.16 * (node->distance_q2 - 90.15) / (90.15 * node->distance_q2)) * 64);
+        static_cast<int32_t>(
+          atan(19.16 * (node->distance_q2 - 90.15) / (90.15 * node->distance_q2)) * 64);
     } else {
       angle_correct_for_distance = 0;
     }
@@ -574,7 +571,9 @@ result_t LidarDataProcessor::wait_scan_data(node_info *nodebuffer, size_t &count
       size_t size = serial_port_->available();
       uint64_t delay_time = 0;
       size_t package_size =
-        (lidar_general_info_.intensity_data_flag ? INTENSITY_NORMAL_PACKAGE_SIZE : NORMAL_PACKAGE_SIZE);
+        lidar_general_info_.intensity_data_flag ?
+        INTENSITY_NORMAL_PACKAGE_SIZE :
+        NORMAL_PACKAGE_SIZE;
 
       if (size > PackagePaidBytes && size < PackagePaidBytes * package_size)
       {

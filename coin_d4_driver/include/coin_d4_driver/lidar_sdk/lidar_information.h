@@ -13,14 +13,14 @@
 #define PI 3.141592654
 #define ULTRASONIC_ANGLE_INC_DEG 0.5
 
-constexpr uint8_t start_lidar[4]={0xAA,0x55,0xF0,0x0F};
-constexpr uint8_t end_lidar[4]={0xAA,0x55,0xF5,0x0A};
-constexpr uint8_t low_exposure[4]={0xAA,0x55,0xF1,0x0E};
-constexpr uint8_t high_exposure[4]={0xAA,0x55,0xF2,0x0D};
-constexpr uint8_t get_version[4]={0xAA,0x55,0xFC,0x03};
+constexpr uint8_t start_lidar[4] = {0xAA, 0x55, 0xF0, 0x0F};
+constexpr uint8_t end_lidar[4] = {0xAA, 0x55, 0xF5, 0x0A};
+constexpr uint8_t low_exposure[4] = {0xAA, 0x55, 0xF1, 0x0E};
+constexpr uint8_t high_exposure[4] = {0xAA, 0x55, 0xF2, 0x0D};
+constexpr uint8_t get_version[4] = {0xAA, 0x55, 0xFC, 0x03};
 
-constexpr uint8_t high_speed[4]={0xAA,0x55,0xF2,0x0D};
-constexpr uint8_t low_speed[4]={0xAA,0x55,0xF1,0x0E};
+constexpr uint8_t high_speed[4] = {0xAA, 0x55, 0xF2, 0x0D};
+constexpr uint8_t low_speed[4] = {0xAA, 0x55, 0xF1, 0x0E};
 
 typedef struct
 {
@@ -91,8 +91,6 @@ typedef enum
 #define IS_TIMEOUT(x) ((x) == RESULT_TIMEOUT)
 #define IS_FAIL(x) ((x) == RESULT_FAIL)
 
-//#define timeout 2000
-
 typedef int32_t result_t;
 
 struct PackageNode
@@ -109,7 +107,6 @@ typedef enum
   CT_Tail,
 } CT;
 
-/*激光雷达对应的版本*/
 typedef enum{
   M1C1_Mini_v1 = 1,
   M1C1_Mini_v2,
@@ -127,7 +124,6 @@ typedef enum{
 #define NORMAL_PACKAGE_SIZE 90
 #define INTENSITY_NORMAL_PACKAGE_SIZE 130
 
-/*对应M1C1_Mini v2版本*/
 struct node_package
 {
   uint16_t package_Head;
@@ -213,8 +209,8 @@ struct LaserPoint
   float angle;
   float range;
   uint16_t intensity;
-  short range_check;
-  LaserPoint &operator=(const LaserPoint &data)
+  int16_t range_check;
+  LaserPoint & operator=(const LaserPoint & data)
   {
     this->angle = data.angle;
     this->range = data.range;

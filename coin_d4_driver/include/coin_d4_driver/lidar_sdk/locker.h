@@ -42,7 +42,7 @@ public:
     release();
   }
 
-  Locker::LOCK_STATUS lock(unsigned long timeout = 0xFFFFFFFF)
+  Locker::LOCK_STATUS lock(uint64_t timeout = 0xFFFFFFFF)
   {
 #ifdef _WIN32
 
@@ -258,9 +258,7 @@ public:
 
       pthread_mutex_unlock(&_cond_locker);
 #endif
-    }
-    else
-    {
+    } else {
 #ifdef _WIN32
       ResetEvent(_event);
 #else
@@ -271,7 +269,7 @@ public:
     }
   }
 
-  unsigned long wait(unsigned long timeout = 0xFFFFFFFF)
+  uint64_t wait(uint64_t timeout = 0xFFFFFFFF)
   {
 #ifdef _WIN32
 
@@ -290,7 +288,7 @@ public:
 
     return EVENT_OK;
 #else
-    unsigned long ans = EVENT_OK;
+    uint64_t ans = EVENT_OK;
     pthread_mutex_lock(&_cond_locker);
 
     if (!_is_signalled)
@@ -298,9 +296,7 @@ public:
       if (timeout == 0xFFFFFFFF)
       {
         pthread_cond_wait(&_cond_var, &_cond_locker);
-      }
-      else
-      {
+      } else {
         struct timespec wait_time;
         clock_gettime(CLOCK_MONOTONIC, &wait_time);
 

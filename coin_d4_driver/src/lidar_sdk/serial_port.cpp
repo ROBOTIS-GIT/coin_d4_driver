@@ -14,11 +14,10 @@
 
 #include "coin_d4_driver/lidar_sdk/serial_port.h"
 
-using namespace std;
-
 
 #define SNCCS 19
 #define BOTHER 0010000
+
 struct termios2 {
   tcflag_t c_iflag;       /* input mode flags */
   tcflag_t c_oflag;       /* output mode flags */
@@ -30,15 +29,21 @@ struct termios2 {
   speed_t c_ospeed;       /* output speed */
 };
 
-Serial_Port::Serial_Port(const string &port, uint32_t baudrate, Timeout timeout,
-               bytesize_t bytesize, parity_t parity, stopbits_t stopbits,
-               flowcontrol_t flowcontrol)
-  :port_(port),baudrate_(baudrate),timeout_(timeout),bytesize_(bytesize),parity_(parity),stopbits_(stopbits),flowcontrol_(flowcontrol){
-
+SerialPort::SerialPort(
+  const std::string & port,
+  uint32_t baudrate,
+  Timeout timeout,
+  bytesize_t bytesize,
+  parity_t parity,
+  stopbits_t stopbits,
+  flowcontrol_t flowcontrol)
+  : port_(port), baudrate_(baudrate), timeout_(timeout), bytesize_(bytesize), parity_(parity),
+  stopbits_(stopbits), flowcontrol_(flowcontrol)
+{
 }
 
-Serial_Port::~Serial_Port(){
-
+SerialPort::~SerialPort()
+{
 }
 
 MillisecondTimer::MillisecondTimer(const uint64_t millis) : expiry(timespec_now())
@@ -50,9 +55,7 @@ MillisecondTimer::MillisecondTimer(const uint64_t millis) : expiry(timespec_now(
     int64_t sec_diff = tv_nsec / static_cast<int>(1e9);
     expiry.tv_nsec = tv_nsec % static_cast<int>(1e9);
     expiry.tv_sec += sec_diff;
-  }
-  else
-  {
+  } else {
     expiry.tv_nsec = tv_nsec;
   }
 }
@@ -80,7 +83,7 @@ timespec timespec_from_ms(const uint32_t millis)
   return time;
 }
 
-result_t Serial_Port::waitForData(size_t data_count, uint64_t timeout, size_t *returned_size)
+result_t SerialPort::waitForData(size_t data_count, uint64_t timeout, size_t *returned_size)
 {
   if(!is_open_)
   {
@@ -89,16 +92,14 @@ result_t Serial_Port::waitForData(size_t data_count, uint64_t timeout, size_t *r
 
   size_t length = 0;
 
-  if (returned_size == NULL)
-  {
-    returned_size = (size_t *)&length;
+  if (returned_size == NULL) {
+    returned_size = reinterpret_cast<size_t *>(&length);
   }
 
   *returned_size = 0;
 
   if (is_open_)
   {
-      /*得到缓冲区里有多少字节*/
     if (ioctl(fd_, FIONREAD, returned_size) == -1) {
       printf("ioctl return value is -1\n");
       return RESULT_FAIL;
@@ -110,9 +111,7 @@ result_t Serial_Port::waitForData(size_t data_count, uint64_t timeout, size_t *r
   }
 
   fd_set readfds;
-  /*将set清零使集合中不含任何fd*/
   FD_ZERO(&readfds);
-  /*将fd_加入set集合*/
   FD_SET(fd_, &readfds);
 
   MillisecondTimer total_timeout(timeout);
@@ -126,36 +125,26 @@ result_t Serial_Port::waitForData(size_t data_count, uint64_t timeout, size_t *r
     }
 
     timespec timeout_val(timespec_from_ms(timeout_remaining_ms));
+    int n = pselect(fd_+1, &readfds, NULL, NULL, &timeout_val, NULL);
 
-    /*检查文件描述符是否就绪*/
-    int n = pselect(fd_+1, &readfds, NULL, NULL, &timeout_val,NULL);
-
-    if (n < 0)
-    {
-      if (errno == EINTR)
-      {
+    if (n < 0) {
+      if (errno == EINTR) {
         return RESULT_TIMEOUT;
       }
       printf("n is lower than zero\n");
       return RESULT_FAIL;
-    }
-    else if (n == 0)
-    {
+    } else if (n == 0) {
       return RESULT_TIMEOUT;
-    }
-    else
-    {
-      /*调用select后，检查fd_是否在set集合中*/
-      if(FD_ISSET(fd_, &readfds)){
-        if(ioctl(fd_, FIONREAD, returned_size)<0){
+    } else {
+      if (FD_ISSET(fd_, &readfds)) {
+        if (ioctl(fd_, FIONREAD, returned_size) < 0) {
           printf("ioctl return value is lower than zero\n");
           return RESULT_FAIL;
         }
 
-        if (*returned_size >= data_count)
-        {
+        if (*returned_size >= data_count) {
           return RESULT_OK;
-        }else{
+        } else {
           int remain_timeout = timeout_val.tv_sec * 1000000 + timeout_val.tv_nsec /1000;
           int expect_remain_time = (data_count - *returned_size) * 1000000 * 8 / baudrate_;
           if (remain_timeout > expect_remain_time)
@@ -163,7 +152,7 @@ result_t Serial_Port::waitForData(size_t data_count, uint64_t timeout, size_t *r
             usleep(expect_remain_time);
           }
         }
-      }else{
+      } else {
         usleep(30);
       }
     }
@@ -171,7 +160,7 @@ result_t Serial_Port::waitForData(size_t data_count, uint64_t timeout, size_t *r
   return RESULT_FAIL;
 }
 
-bool Serial_Port::waitReadable(uint32_t timeout_t)
+bool SerialPort::waitReadable(uint32_t timeout_t)
 {
   // Setup a select call to block for serial data or a timeout
   fd_set readfds;
@@ -180,11 +169,9 @@ bool Serial_Port::waitReadable(uint32_t timeout_t)
   timespec timeout_ts(timespec_from_ms(timeout_t));
   int r = pselect(fd_ + 1, &readfds, NULL, NULL, &timeout_ts, NULL);
 
-  if (r < 0)
-  {
+  if (r < 0) {
     // Select was interrupted
-    if (errno == EINTR)
-    {
+    if (errno == EINTR) {
       return false;
     }
 
@@ -193,14 +180,12 @@ bool Serial_Port::waitReadable(uint32_t timeout_t)
   }
 
   // Timeout occurred
-  if (r == 0)
-  {
+  if (r == 0) {
     return false;
   }
 
   // This shouldn't happen, if r > 0 our fd has to be in the list!
-  if (!FD_ISSET(fd_, &readfds))
-  {
+  if (!FD_ISSET(fd_, &readfds)) {
     return false;
   }
 
@@ -208,19 +193,17 @@ bool Serial_Port::waitReadable(uint32_t timeout_t)
   return true;
 }
 
-size_t Serial_Port::available()
+size_t SerialPort::available()
 {
-  if (!is_open_)
-  {
+  if (!is_open_) {
     return 0;
   }
 
   int count = 0;
 
-  if (-1 == ioctl(fd_, TIOCINQ, &count))
-  {
+  if (-1 == ioctl(fd_, TIOCINQ, &count)) {
     return 0;
-  }else{
+  } else{
     return static_cast<size_t>(count);
   }
 }
@@ -229,11 +212,11 @@ uint32_t byte_time_ns_;
 
 void waitByteTimes(size_t count)
 {
-  timespec wait_time = {0, static_cast<long>(byte_time_ns_ * count)};
+  timespec wait_time = {0, static_cast<int64_t>(byte_time_ns_ * count)};
   pselect(0, NULL, NULL, NULL, &wait_time, NULL);
 }
 
-result_t Serial_Port::read_data(uint8_t *buf, size_t size)
+result_t SerialPort::read_data(uint8_t *buf, size_t size)
 {
   // If the port is not open, throw
   if (!is_open_)
@@ -246,8 +229,8 @@ result_t Serial_Port::read_data(uint8_t *buf, size_t size)
   size_t bytes_read = 0;
 
   // Calculate total timeout in milliseconds t_c + (t_m * N)
-  long total_timeout_ms = timeout_.read_timeout_constant;
-  total_timeout_ms += timeout_.read_timeout_multiplier * static_cast<long>(size);
+  int64_t total_timeout_ms = timeout_.read_timeout_constant;
+  total_timeout_ms += timeout_.read_timeout_multiplier * static_cast<int64_t>(size);
   MillisecondTimer total_timeout(total_timeout_ms);
 
   // Pre-fill buffer with available bytes
@@ -331,7 +314,7 @@ result_t Serial_Port::read_data(uint8_t *buf, size_t size)
   return bytes_read;
 }
 
-size_t Serial_Port::write_data(const uint8_t *data, size_t length) {
+size_t SerialPort::write_data(const uint8_t *data, size_t length) {
   if (is_open_ == false) {
     return 0;
   }
@@ -341,8 +324,8 @@ size_t Serial_Port::write_data(const uint8_t *data, size_t length) {
   size_t bytes_written = 0;
 
   // Calculate total timeout in milliseconds t_c + (t_m * N)
-  long total_timeout_ms = timeout_.write_timeout_constant;
-  total_timeout_ms += timeout_.write_timeout_multiplier * static_cast<long>
+  int64_t total_timeout_ms = timeout_.write_timeout_constant;
+  total_timeout_ms += timeout_.write_timeout_multiplier * static_cast<int64_t>
                       (length);
   MillisecondTimer total_timeout(total_timeout_ms);
 
@@ -420,10 +403,7 @@ size_t Serial_Port::write_data(const uint8_t *data, size_t length) {
           break;
         }
       }
-
-      // This shouldn't happen, if r > 0 our fd has to be in the list!
       break;
-      //THROW (IOException, "select reports ready to write, but our fd isn't in the list, this shouldn't happen!");
     }
   }
 
@@ -431,11 +411,12 @@ size_t Serial_Port::write_data(const uint8_t *data, size_t length) {
 }
 
 
-uint32_t Serial_Port::getByteTime() {
+uint32_t SerialPort::getByteTime() {
   return byte_time_ns_;
 }
 
-bool Serial_Port::getTermios(termios *tio) {
+bool SerialPort::getTermios(termios *tio)
+{
   ::memset(tio, 0, sizeof(termios));
 
   if (::tcgetattr(fd_, tio) == -1) {
@@ -446,7 +427,8 @@ bool Serial_Port::getTermios(termios *tio) {
 }
 
 
-void Serial_Port::set_databits(termios *tio, bytesize_t databits) {
+void SerialPort::set_databits(termios *tio, bytesize_t databits)
+{
   tio->c_cflag &= ~CSIZE;
 
   switch (databits) {
@@ -472,14 +454,12 @@ void Serial_Port::set_databits(termios *tio, bytesize_t databits) {
   }
 }
 
-void Serial_Port::set_parity(termios *tio,parity_t parity) {
+void SerialPort::set_parity(termios *tio, parity_t parity) {
   tio->c_iflag &= ~(PARMRK | INPCK);
   tio->c_iflag |= IGNPAR;
 
   switch (parity) {
-
 #ifdef CMSPAR
-
     case parity_space:
       tio->c_cflag &= ~PARODD;
       tio->c_cflag |= PARENB | CMSPAR;
@@ -511,7 +491,7 @@ void Serial_Port::set_parity(termios *tio,parity_t parity) {
   }
 }
 
-void Serial_Port::set_stopbits(termios *tio, stopbits_t stopbits) {
+void SerialPort::set_stopbits(termios *tio, stopbits_t stopbits) {
   switch (stopbits) {
     case stopbits_one:
       tio->c_cflag &= ~CSTOPB;
@@ -527,7 +507,7 @@ void Serial_Port::set_stopbits(termios *tio, stopbits_t stopbits) {
   }
 }
 
-void Serial_Port::set_flowcontrol(termios *tio,flowcontrol_t flowcontrol) {
+void SerialPort::set_flowcontrol(termios *tio, flowcontrol_t flowcontrol) {
   switch (flowcontrol) {
     case flowcontrol_none:
       tio->c_cflag &= ~CRTSCTS;
@@ -551,7 +531,7 @@ void Serial_Port::set_flowcontrol(termios *tio,flowcontrol_t flowcontrol) {
   }
 }
 
-bool Serial_Port::setCustomBaudRate(unsigned long baudrate) {
+bool SerialPort::setCustomBaudRate(uint64_t baudrate) {
   struct termios2 tio2;
 
   if (::ioctl(fd_, TCGETS2, &tio2) != -1) {
@@ -573,8 +553,7 @@ bool Serial_Port::setCustomBaudRate(unsigned long baudrate) {
   }
 }
 
-bool Serial_Port::setBaudrate(unsigned long baudrate) {
-
+bool SerialPort::setBaudrate(uint64_t baudrate) {
   if (fd_ == -1) {
     return false;
   }
@@ -582,8 +561,8 @@ bool Serial_Port::setBaudrate(unsigned long baudrate) {
 
   return setCustomBaudRate(baudrate);
 }
-bool Serial_Port::setTermios(const termios *tio) {
 
+bool SerialPort::setTermios(const termios *tio) {
   tcflush(fd_, TCIFLUSH);
 
   if (fcntl(fd_, F_SETFL, FNDELAY)) {
@@ -597,7 +576,7 @@ bool Serial_Port::setTermios(const termios *tio) {
   return true;
 }
 
-void Serial_Port::set_common_props(termios *tio) {
+void SerialPort::set_common_props(termios *tio) {
 #ifdef OS_SOLARIS
   tio->c_iflag &= ~(IMAXBEL | IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR |
                     ICRNL | IXON);
@@ -613,8 +592,7 @@ void Serial_Port::set_common_props(termios *tio) {
   tio->c_cc[VMIN] = 0;
 }
 
-bool Serial_Port::open() {
-
+bool SerialPort::open() {
   if (port_.empty()) {
     return false;
   }
@@ -663,7 +641,7 @@ bool Serial_Port::open() {
   return true;
 }
 
-bool Serial_Port::setDTR(bool level) {
+bool SerialPort::setDTR(bool level) {
   if (is_open_ == false) {
     return false;
   }
@@ -681,7 +659,7 @@ bool Serial_Port::setDTR(bool level) {
 }
 
 /*关闭串口*/
-void Serial_Port::close()
+void SerialPort::close()
 {
   if (is_open_ == true)
   {

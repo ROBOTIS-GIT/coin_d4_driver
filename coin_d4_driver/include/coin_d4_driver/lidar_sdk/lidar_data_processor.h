@@ -43,7 +43,7 @@ private:
 
   uint8_t * global_recv_buffer_;
 
-  Serial_Port * serial_port_;
+  SerialPort * serial_port_;
   LidarTimeStatus * lidar_time_;
   LidarHardwareStatus * lidar_status_;
   LidarGeneralInfo lidar_general_info_;
@@ -58,7 +58,7 @@ public:
     LidarPackage & scan_packages);
   ~LidarDataProcessor();
 
-  void set_serial_port(Serial_Port * serial_port);
+  void set_serial_port(SerialPort * serial_port);
 
   int package_sample_bytes_;
 

@@ -1,20 +1,19 @@
 // Copyright 2025 ROBOTIS CO., LTD.
 // Authors: Hyeongjun Jeon
 
-#ifndef COIN_D4_DRIVER__LIDAR_SDK__NODE_SERIAL_H_
-#define COIN_D4_DRIVER__LIDAR_SDK__NODE_SERIAL_H_
+#ifndef COIN_D4_DRIVER__LIDAR_SDK__SERIAL_PORT_H_
+#define COIN_D4_DRIVER__LIDAR_SDK__SERIAL_PORT_H_
 
 #include <stdint.h>
-#include <vector>
+#include <termios.h>
 
-#include <string>
 #include <atomic>
 #include <limits>
-#include <termios.h>
+#include <string>
+#include <vector>
+
 #include "coin_d4_driver/lidar_sdk/lidar_information.h"
 
-
-using namespace std;
 
 class MillisecondTimer
 {
@@ -89,49 +88,46 @@ typedef enum {
   parity_space = 4
 } parity_t;
 
-class Serial_Port
+class SerialPort
 {
 private:
-  string port_;
+  std::string port_;
 
-  unsigned long baudrate_;    // Baudrate
+  uint64_t baudrate_;  // Baudrate
   int fd_;
   pid_t pid;
   bool is_open_ = false;
-  uint32_t byte_time_ns_; // Nanoseconds to transmit/receive a single byte
+  uint32_t byte_time_ns_;  // Nanoseconds to transmit/receive a single byte
 
-  Timeout timeout_;           // Timeout for read operations
+  Timeout timeout_;  // Timeout for read operations
 
-  parity_t parity_;           // Parity
-  bytesize_t bytesize_;       // Size of the bytes
-  stopbits_t stopbits_;       // Stop Bits
-  flowcontrol_t flowcontrol_; // Flow Control
+  parity_t parity_;  // Parity
+  bytesize_t bytesize_;  // Size of the bytes
+  stopbits_t stopbits_;  // Stop Bits
+  flowcontrol_t flowcontrol_;  // Flow Control
 
 public:
-  Serial_Port(const std::string &port = "",
-                  uint32_t baudrate = 115200,
-                  Timeout timeout = Timeout(),
-                  bytesize_t bytesize = eightbits,
-                  parity_t parity = parity_none,
-                  stopbits_t stopbits = stopbits_one,
-                  flowcontrol_t flowcontrol = flowcontrol_none);
+  SerialPort(
+    const std::string & port = "",
+    uint32_t baudrate = 115200,
+    Timeout timeout = Timeout(),
+    bytesize_t bytesize = eightbits,
+    parity_t parity = parity_none,
+    stopbits_t stopbits = stopbits_one,
+    flowcontrol_t flowcontrol = flowcontrol_none);
 
-  ~Serial_Port();
+  ~SerialPort();
   bool open();
   void close();
   bool getTermios(termios *tio);
 
-  /*设置数据位数*/
   void set_databits(termios *tio, bytesize_t databits);
 
-  /*设置奇偶性*/
   void set_parity(termios *tio, parity_t parity);
 
-  /*设置停止位*/
   void set_stopbits(termios *tio, stopbits_t stopbits);
 
-  /*流量控制*/
-  void set_flowcontrol(termios *tio,flowcontrol_t flowcontrol);
+  void set_flowcontrol(termios *tio, flowcontrol_t flowcontrol);
 
   void set_common_props(termios *tio);
 
@@ -142,16 +138,12 @@ public:
   size_t available();
   bool setDTR(bool level);
 
-  /*获取串口传输一个byte时间*/
   uint32_t getByteTime();
 
-  bool setBaudrate(unsigned long baudrate);
+  bool setBaudrate(uint64_t baudrate);
   bool setTermios(const termios *tio);
-  bool setCustomBaudRate(unsigned long baudrate);
+  bool setCustomBaudRate(uint64_t baudrate);
   bool waitReadable(uint32_t timeout_t);
-
-
-
 };
 
-#endif  // COIN_D4_DRIVER__LIDAR_SDK__NODE_SERIAL_H_
+#endif  // COIN_D4_DRIVER__LIDAR_SDK__SERIAL_PORT_H_

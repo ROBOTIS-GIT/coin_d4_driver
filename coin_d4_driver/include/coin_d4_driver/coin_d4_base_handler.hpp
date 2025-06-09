@@ -75,7 +75,7 @@ private:
   size_t scan_node_count_ = 0;
 
   std::shared_ptr<LidarDataProcessor> lidar_data_processor_;
-  std::shared_ptr<Serial_Port> serial_port_;
+  std::shared_ptr<SerialPort> serial_port_;
   Event data_event_;
   Locker lock_;
 

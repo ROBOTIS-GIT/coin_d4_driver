@@ -126,7 +126,7 @@ bool CoinD4BaseHandler::init_lidar_port()
   }
 
   serial_port_ =
-    std::make_shared<Serial_Port>(
+    std::make_shared<SerialPort>(
       lidar_general_info_.port,
       lidar_general_info_.serial_baud_rate,
       Timeout::simpleTimeout(DEFAULT_TIMEOUT));
