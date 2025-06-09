@@ -1,20 +1,29 @@
+################################################################################
+# Set minimum required version of cmake, project name and compile options
+################################################################################
 cmake_minimum_required(VERSION 3.5)
-
 project(coin_d4_driver)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
 endif()
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+################################################################################
+# Find ament packages and libraries for ament and system dependencies
+################################################################################
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
+################################################################################
+# Build
+################################################################################
 include_directories(
   ${PROJECT_SOURCE_DIR}/include
 )
@@ -51,6 +60,9 @@ target_link_libraries(multi_coin_d4_node
   ${PROJECT_NAME}_lib
 )
 
+################################################################################
+# Install
+################################################################################
 install(DIRECTORY include/
   DESTINATION include
 )
@@ -74,6 +86,7 @@ install(
 install(TARGETS single_coin_d4_node
   DESTINATION lib/${PROJECT_NAME}
 )
+
 install(TARGETS multi_coin_d4_node
   DESTINATION lib/${PROJECT_NAME}
 )
