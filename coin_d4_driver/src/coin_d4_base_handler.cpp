@@ -151,7 +151,7 @@ void CoinD4BaseHandler::flush_serial()
 
   if (len) {
     uint8_t * buffer = static_cast<uint8_t *>(alloca(len * sizeof(uint8_t)));
-    size_t bytes_read = serial_port_->read_data(buffer, len);
+    serial_port_->read_data(buffer, len);
   }
 
   sleep_ms(20);
@@ -459,7 +459,7 @@ void CoinD4BaseHandler::parse_lidar_serial_data(LaserScan & outscan)
     if (lidar_status_->serial_connected) {
       float range = std::numeric_limits<float>::quiet_NaN();
       float angle = std::numeric_limits<float>::quiet_NaN();
-      uint16_t intensity = std::numeric_limits<float>::quiet_NaN();
+      uint16_t intensity = 0;
       for (int i = count - 1; i > 0; i--) {
         LaserPoint point;
         LaserPoint point_check;
@@ -488,13 +488,13 @@ void CoinD4BaseHandler::parse_lidar_serial_data(LaserScan & outscan)
           point.intensity = intensity;
         } else {
           point.range = std::numeric_limits<float>::quiet_NaN();
-          point.intensity = std::numeric_limits<float>::quiet_NaN();
+          point.intensity = 0;
           point.angle = std::numeric_limits<float>::quiet_NaN();
         }
 
         if (range <= 0.15 && intensity <= 65) {
           point.range = std::numeric_limits<float>::quiet_NaN();
-          point.intensity = std::numeric_limits<float>::quiet_NaN();
+          point.intensity = 0;
         }
         outscan.points.push_back(point);
       }

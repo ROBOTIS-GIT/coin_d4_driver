@@ -106,8 +106,8 @@ private:
 
   Timeout timeout_;  // Timeout for read operations
 
-  parity_t parity_;  // Parity
   bytesize_t bytesize_;  // Size of the bytes
+  parity_t parity_;  // Parity
   stopbits_t stopbits_;  // Stop Bits
   flowcontrol_t flowcontrol_;  // Flow Control
 

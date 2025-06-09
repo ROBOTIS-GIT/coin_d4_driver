@@ -544,6 +544,8 @@ bool SerialPort::setCustomBaudRate(uint64_t baudrate)
       return true;
     }
   }
+
+  return false;
 }
 
 bool SerialPort::setBaudrate(uint64_t baudrate)
