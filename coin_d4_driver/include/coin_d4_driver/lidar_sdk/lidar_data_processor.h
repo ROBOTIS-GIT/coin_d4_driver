@@ -20,12 +20,12 @@ private:
   uint16_t target_check_sum_;
   uint16_t sample_numl_and_ct_cal_;
   uint16_t last_sample_angle_calculated_;
-  uint16_t Valu8Tou16;
-  uint16_t package_Sample_Index; //包采样点索引
-  uint16_t FirstSampleAngle;     //起始采样角
+  uint16_t check_sum_16_value_holder_;
+  uint16_t package_sample_index_; //包采样点索引
+  uint16_t first_sample_angle_;     //起始采样角
   uint16_t last_sample_angle_;      //结束采样角
   uint8_t scan_frequency;	       //协议中雷达转速
-  bool CheckSumResult;
+  bool check_sum_result_;
   bool has_package_error;
   float interval_sample_angle_;
   float interval_sample_angle_last_package_;

@@ -1,3 +1,6 @@
+// Copyright 2025 ROBOTIS CO., LTD.
+// Authors: Hyeongjun Jeon
+
 #ifndef COIN_D4_DRIVER__LIDAR_SDK__MTIME_H_
 #define COIN_D4_DRIVER__LIDAR_SDK__MTIME_H_
 
@@ -15,7 +18,6 @@ enum TIME_PRECISION
   TIME_HOUR
 };
 
-//计算用时
 extern std::chrono::time_point<std::chrono::steady_clock> time_start;
 inline void timestart()
 {

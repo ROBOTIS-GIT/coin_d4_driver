@@ -8,7 +8,7 @@
 #include "coin_d4_driver/lidar_sdk/timer.h"
 
 
-uint32_t getms()
+uint32_t get_milliseconds()
 {
     struct timespec t;
     t.tv_sec = t.tv_nsec = 0;

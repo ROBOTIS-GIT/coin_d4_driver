@@ -1,3 +1,6 @@
+// Copyright 2025 ROBOTIS CO., LTD.
+// Authors: Hyeongjun Jeon
+
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
@@ -20,12 +23,12 @@ LidarDataProcessor::LidarDataProcessor(
   target_check_sum_ = 0;
   sample_numl_and_ct_cal_ = 0;
   last_sample_angle_calculated_ = 0;
-  Valu8Tou16 = 0;
-  package_Sample_Index = 0;
-  FirstSampleAngle = 0;
+  check_sum_16_value_holder_ = 0;
+  package_sample_index_ = 0;
+  first_sample_angle_ = 0;
   last_sample_angle_ = 0;
   scan_frequency = 0;
-  CheckSumResult = false;
+  check_sum_result_ = false;
   has_package_error = false;
   interval_sample_angle_ = 0.0f;
   interval_sample_angle_last_package_ = 0.0;
@@ -107,7 +110,7 @@ result_t LidarDataProcessor::sendData(const uint8_t *data, size_t size)
 result_t LidarDataProcessor::waitSpeedRight(uint8_t cmd,uint64_t timeout)
 {
     int  recvPos     = 0;
-    uint32_t startTs = getms();
+    uint32_t startTs = get_milliseconds();
     uint8_t  recvBuffer[100];
     uint32_t waitTime = 0;
     //uint16_t data_count = 0;
@@ -118,7 +121,7 @@ result_t LidarDataProcessor::waitSpeedRight(uint8_t cmd,uint64_t timeout)
 
     uint16_t data_lenth = 0; //数据长度
 
-    while ((waitTime = getms() - startTs) <= timeout){
+    while ((waitTime = get_milliseconds() - startTs) <= timeout){
       size_t remainSize = 9;
       size_t recvSize = 0;
       result_t ans = serial_port_->waitForData(remainSize, timeout - waitTime, &recvSize);
@@ -219,9 +222,9 @@ result_t LidarDataProcessor::waitSpeedRight(uint8_t cmd,uint64_t timeout)
     if(recvPos == 9)
     {
       printf("333\n");
-      startTs = getms();
+      startTs = get_milliseconds();
       recvPos = 0;
-      while ((waitTime = getms() - startTs) <= timeout)
+      while ((waitTime = get_milliseconds() - startTs) <= timeout)
       {
         size_t remainSize = data_lenth + 1;
         size_t recvSize = 0;
@@ -259,20 +262,20 @@ result_t LidarDataProcessor::waitPackage(node_info *node, uint32_t timeout)
     return RESULT_FAIL;
   }
   int recvPos = 0;
-  uint32_t startTs = getms();
+  uint32_t startTs = get_milliseconds();
   uint32_t waitTime = 0;
-  uint8_t * packageBuffer =
+  uint8_t * package_buffer =
     (lidar_general_info_.intensity_data_flag) ?
     (uint8_t *)&scan_packages_.package.package_Head :
     (uint8_t *)&scan_packages_.packages.package_Head;
   uint8_t package_sample_num = 0;
-  int32_t AngleCorrectForDistance = 0;
+  int32_t angle_correct_for_distance_ = 0;
   int package_recvPos = 0;
   uint8_t package_type = 0;
 
-  if (package_Sample_Index == 0) {
+  if (package_sample_index_ == 0) {
     recvPos = 0;
-    while ((waitTime = getms() - startTs) <= timeout) {
+    while ((waitTime = get_milliseconds() - startTs) <= timeout) {
       size_t remainSize = PackagePaidBytes - recvPos;
       size_t recvSize = 0;
 
@@ -339,7 +342,7 @@ result_t LidarDataProcessor::waitPackage(node_info *node, uint32_t timeout)
         case 4:
           if (currentByte & LIDAR_RESP_MEASUREMENT_CHECKBIT)
           {
-            FirstSampleAngle = currentByte;
+            first_sample_angle_ = currentByte;
           }else{
             has_package_error = true;
             recvPos = 0;
@@ -349,9 +352,9 @@ result_t LidarDataProcessor::waitPackage(node_info *node, uint32_t timeout)
           break;
 
         case 5:
-          FirstSampleAngle += currentByte * 0x100;
-          calculated_check_sum_ ^= FirstSampleAngle;
-          FirstSampleAngle = FirstSampleAngle >> 1;
+          first_sample_angle_ += currentByte * 0x100;
+          calculated_check_sum_ ^= first_sample_angle_;
+          first_sample_angle_ = first_sample_angle_ >> 1;
           break;
 
         case 6:
@@ -375,10 +378,10 @@ result_t LidarDataProcessor::waitPackage(node_info *node, uint32_t timeout)
           if (package_sample_num == 1) {
             interval_sample_angle_ = 0.0f;
           } else{
-            if (last_sample_angle_ < FirstSampleAngle) {
-              if ((FirstSampleAngle > 270 * 64) && (last_sample_angle_ < 90 * 64)) {
+            if (last_sample_angle_ < first_sample_angle_) {
+              if ((first_sample_angle_ > 270 * 64) && (last_sample_angle_ < 90 * 64)) {
                 interval_sample_angle_ =
-                  (float)((360 * 64 + last_sample_angle_ - FirstSampleAngle) /
+                  (float)((360 * 64 + last_sample_angle_ - first_sample_angle_) /
                                                           ((package_sample_num - 1) *1.0));
                 interval_sample_angle_last_package_ = interval_sample_angle_;
               } else {
@@ -386,7 +389,7 @@ result_t LidarDataProcessor::waitPackage(node_info *node, uint32_t timeout)
               }
             } else {
               interval_sample_angle_ =
-                (float)((last_sample_angle_ - FirstSampleAngle) / ((package_sample_num - 1) * 1.0));
+                (float)((last_sample_angle_ - first_sample_angle_) / ((package_sample_num - 1) * 1.0));
               interval_sample_angle_last_package_ = interval_sample_angle_;
             }
           }
@@ -401,7 +404,7 @@ result_t LidarDataProcessor::waitPackage(node_info *node, uint32_t timeout)
           target_check_sum_ += (currentByte * 0x100);
           break;
         }
-        packageBuffer[recvPos++] = currentByte;
+        package_buffer[recvPos++] = currentByte;
       }
 
       if (recvPos == PackagePaidBytes)
@@ -413,10 +416,10 @@ result_t LidarDataProcessor::waitPackage(node_info *node, uint32_t timeout)
 
     if (PackagePaidBytes == recvPos)
     {
-      startTs = getms();
+      startTs = get_milliseconds();
       recvPos = 0;
 
-      while ((waitTime = getms() - startTs) <= timeout)
+      while ((waitTime = get_milliseconds() - startTs) <= timeout)
       {
         size_t remainSize = package_sample_num * PackageSampleBytes - recvPos;
         size_t recvSize = 0;
@@ -438,24 +441,24 @@ result_t LidarDataProcessor::waitPackage(node_info *node, uint32_t timeout)
         {
             if (lidar_general_info_.intensity_data_flag) {
               if (recvPos % 3 == 2) {
-                Valu8Tou16 += globalRecvBuffer[pos] * 0x100;
-                calculated_check_sum_ ^= Valu8Tou16;
+                check_sum_16_value_holder_ += globalRecvBuffer[pos] * 0x100;
+                calculated_check_sum_ ^= check_sum_16_value_holder_;
               } else if (recvPos % 3 == 1) {
-                Valu8Tou16 = globalRecvBuffer[pos];
+                check_sum_16_value_holder_ = globalRecvBuffer[pos];
               } else {
-                Valu8Tou16 = globalRecvBuffer[pos];
-                Valu8Tou16 += 0x00 * 0x100;
+                check_sum_16_value_holder_ = globalRecvBuffer[pos];
+                check_sum_16_value_holder_ += 0x00 * 0x100;
                 calculated_check_sum_ ^= globalRecvBuffer[pos];
               }
             } else {
               if (recvPos % 2 == 1) {
-                Valu8Tou16 += globalRecvBuffer[pos] * 0x100;
-                calculated_check_sum_ ^= Valu8Tou16;
+                check_sum_16_value_holder_ += globalRecvBuffer[pos] * 0x100;
+                calculated_check_sum_ ^= check_sum_16_value_holder_;
               } else {
-                Valu8Tou16 = globalRecvBuffer[pos];
+                check_sum_16_value_holder_ = globalRecvBuffer[pos];
               }
             }
-          packageBuffer[package_recvPos + recvPos] = globalRecvBuffer[pos];
+          package_buffer[package_recvPos + recvPos] = globalRecvBuffer[pos];
           recvPos++;
         }
 
@@ -484,12 +487,12 @@ result_t LidarDataProcessor::waitPackage(node_info *node, uint32_t timeout)
         target_check_sum_,
         package_sample_num,
         recvPos);
-      CheckSumResult = false;
+      check_sum_result_ = false;
       has_package_error = true;
     }
     else
     {
-      CheckSumResult = true;
+      check_sum_result_ = true;
     }
   }
   uint8_t package_CT;
@@ -516,7 +519,7 @@ result_t LidarDataProcessor::waitPackage(node_info *node, uint32_t timeout)
       }else{
         node->index = 0xff;
       }
-      if (package_Sample_Index == 0)
+      if (package_sample_index_ == 0)
       {
         package_index++;
       }
@@ -529,7 +532,7 @@ result_t LidarDataProcessor::waitPackage(node_info *node, uint32_t timeout)
     node->index = 255;
     package_index = 0;
 
-    if (CheckSumResult)
+    if (check_sum_result_)
     {
       has_package_error = false;
       node->scan_frequency = scan_frequency;
@@ -539,59 +542,49 @@ result_t LidarDataProcessor::waitPackage(node_info *node, uint32_t timeout)
   node->sync_quality = Node_Default_Quality;
   node->stamp = 0;
 
-  if (CheckSumResult)
-  {
-    if(lidar_general_info_.intensity_data_flag)
-    {
-
-      node->distance_q2 = (scan_packages_.package.packageSampleDistance[package_Sample_Index*3+2] * 64) +
-                            (scan_packages_.package.packageSampleDistance[package_Sample_Index*3+1] >> 2);
-      node->sync_quality = (scan_packages_.package.packageSampleDistance[package_Sample_Index*3+1] & 0x03)*64 +
-                            (scan_packages_.package.packageSampleDistance[package_Sample_Index*3] >> 2);
-      node->exp_m = scan_packages_.package.packageSampleDistance[package_Sample_Index*3] & 0x01;
-      //node->distance_q2 = (scan_packages_.packages.packageSampleDistance[package_Sample_Index*3+1] >> 2 | (scan_packages_.packages.packageSampleDistance[package_Sample_Index*3+2] << 6));
-      //node->sync_quality = ((scan_packages_.packages.packageSampleDistance[package_Sample_Index*3] >> 2) & 0x3F) + (scan_packages_.packages.packageSampleDistance[package_Sample_Index*3+1] & 0x03) * 64;
-    }else{
-      node->distance_q2 = scan_packages_.packages.packageSampleDistance[package_Sample_Index]>>2;
-      node->sync_quality = ((uint16_t)((scan_packages_.packages.packageSampleDistance[package_Sample_Index]) & 0x03));
+  if (check_sum_result_) {
+    if(lidar_general_info_.intensity_data_flag) {
+      node->distance_q2 =
+        (scan_packages_.package.packageSampleDistance[package_sample_index_* 3 + 2] * 64) +
+        (scan_packages_.package.packageSampleDistance[package_sample_index_* 3 + 1] >> 2);
+      node->sync_quality =
+        (scan_packages_.package.packageSampleDistance[package_sample_index_* 3 + 1] & 0x03) * 64 +
+        (scan_packages_.package.packageSampleDistance[package_sample_index_ * 3] >> 2);
+      node->exp_m = scan_packages_.package.packageSampleDistance[package_sample_index_*3] & 0x01;
+    } else{
+      node->distance_q2 = scan_packages_.packages.packageSampleDistance[package_sample_index_]>>2;
+      node->sync_quality =
+        ((uint16_t)((scan_packages_.packages.packageSampleDistance[package_sample_index_]) & 0x03));
     }
 
-    if (node->distance_q2 != 0)
-    {
-      //结构引起的补偿
-      /*
-      AngleCorrectForDistance = (int32_t)(((atan(((21.8 * (155.3 - (node->distance_q2 / 4.0))) / 155.3) /
-                                                 (node->distance_q2 / 4.0))) *180.0 / 3.1415) * 64.0);*/
-
-      AngleCorrectForDistance = (int32_t)(atan(19.16*(node->distance_q2-90.15)/(90.15*node->distance_q2))*64);
-
-    }else{
-      AngleCorrectForDistance = 0;
+    if (node->distance_q2 != 0) {
+      angle_correct_for_distance_ =
+        (int32_t)(atan(19.16 * (node->distance_q2 - 90.15) / (90.15 * node->distance_q2)) * 64);
+    } else {
+      angle_correct_for_distance_ = 0;
     }
 
-    float sampleAngle = interval_sample_angle_ * package_Sample_Index;
+    float sample_angle = interval_sample_angle_ * package_sample_index_;
 
-    if ((FirstSampleAngle + sampleAngle + AngleCorrectForDistance) < 0)
-    {
-      node->angle_q6_checkbit = (((uint16_t)(FirstSampleAngle + sampleAngle +
-                                               AngleCorrectForDistance + 23040))
+    if ((first_sample_angle_ + sample_angle + angle_correct_for_distance_) < 0) {
+      node->angle_q6_checkbit = (((uint16_t)(first_sample_angle_ + sample_angle +
+                                               angle_correct_for_distance_ + 23040))
                                    << LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) +
                                   LIDAR_RESP_MEASUREMENT_CHECKBIT;
-    }else{
-      if ((FirstSampleAngle + sampleAngle + AngleCorrectForDistance) > 23040)
-      {
-        node->angle_q6_checkbit = (((uint16_t)(FirstSampleAngle + sampleAngle +
-                                                 AngleCorrectForDistance - 23040))
+    } else {
+      if ((first_sample_angle_ + sample_angle + angle_correct_for_distance_) > 23040) {
+        node->angle_q6_checkbit = (((uint16_t)(first_sample_angle_ + sample_angle +
+                                                 angle_correct_for_distance_ - 23040))
                                      << LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) +
                                     LIDAR_RESP_MEASUREMENT_CHECKBIT;
-      }else{
-        node->angle_q6_checkbit = (((uint16_t)(FirstSampleAngle + sampleAngle +
-                                                 AngleCorrectForDistance))
+      } else{
+        node->angle_q6_checkbit = (((uint16_t)(first_sample_angle_ + sample_angle +
+                                                 angle_correct_for_distance_))
                                      << LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) +
                                     LIDAR_RESP_MEASUREMENT_CHECKBIT;
       }
     }
-  }else{
+  } else {
     node->sync_flag = Node_NotSync;
     node->sync_quality = Node_Default_Quality;
     node->angle_q6_checkbit = LIDAR_RESP_MEASUREMENT_CHECKBIT;
@@ -608,12 +601,12 @@ result_t LidarDataProcessor::waitPackage(node_info *node, uint32_t timeout)
     nowPackageNum = scan_packages_.packages.nowPackageNum;
   }
 
-  package_Sample_Index ++;
+  package_sample_index_ ++;
 
-  if (package_Sample_Index >= nowPackageNum)
+  if (package_sample_index_ >= nowPackageNum)
   {
-    package_Sample_Index = 0;
-    CheckSumResult = false;
+    package_sample_index_ = 0;
+    check_sum_result_ = false;
   }
   return RESULT_OK;
 }
@@ -627,11 +620,11 @@ result_t LidarDataProcessor::waitScanData(node_info *nodebuffer, size_t &count, 
   }
 
   recvNodeCount = 0;
-  uint32_t startTs = getms();
+  uint32_t startTs = get_milliseconds();
   uint32_t waitTime = 0;
   result_t ans = RESULT_FAIL;
   /*超时处理及点数判断*/
-  while ((waitTime = getms() - startTs) <= timeout && recvNodeCount < count)
+  while ((waitTime = get_milliseconds() - startTs) <= timeout && recvNodeCount < count)
   {
     node_info node;
     ans = waitPackage(&node, timeout - waitTime);

@@ -1,3 +1,6 @@
+// Copyright 2025 ROBOTIS CO., LTD.
+// Authors: Hyeongjun Jeon
+
 #pragma once
 #ifdef _WIN32
 #include <conio.h>

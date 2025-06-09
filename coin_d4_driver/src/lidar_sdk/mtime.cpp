@@ -1,3 +1,6 @@
+// Copyright 2025 ROBOTIS CO., LTD.
+// Authors: Hyeongjun Jeon
+
 #include "coin_d4_driver/lidar_sdk/mtime.h"
 
 using namespace std;

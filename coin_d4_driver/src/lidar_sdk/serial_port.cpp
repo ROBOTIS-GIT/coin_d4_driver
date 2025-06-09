@@ -1,3 +1,6 @@
+// Copyright 2025 ROBOTIS CO., LTD.
+// Authors: Hyeongjun Jeon
+
 #include <stdio.h>
 #include <termios.h>
 #include <string.h>
