@@ -77,7 +77,7 @@ result_t LidarDataProcessor::send_command(uint8_t cmd)
   return 0;
 }
 
-result_t LidarDataProcessor::send_data(const uint8_t *data, size_t size)
+result_t LidarDataProcessor::send_data(const uint8_t * data, size_t size)
 {
   if (data == nullptr || size == 0) {
     return RESULT_FAIL;
@@ -227,7 +227,7 @@ result_t LidarDataProcessor::wait_speed_right(uint8_t /*cmd*/, uint64_t timeout)
   return RESULT_FAIL;
 }
 
-result_t LidarDataProcessor::wait_package(node_info *node, uint32_t timeout)
+result_t LidarDataProcessor::wait_package(node_info * node, uint32_t timeout)
 {
   if (!serial_port_) {
     return RESULT_FAIL;
@@ -235,9 +235,9 @@ result_t LidarDataProcessor::wait_package(node_info *node, uint32_t timeout)
   int recv_pos = 0;
   uint32_t start_ts = get_milliseconds();
   uint32_t wait_time = 0;
-  uint8_t *package_buffer = lidar_general_info_.intensity_data_flag
-    ? reinterpret_cast<uint8_t *>(&scan_packages_.package.package_Head)
-    : reinterpret_cast<uint8_t *>(&scan_packages_.packages.package_Head);
+  uint8_t * package_buffer = lidar_general_info_.intensity_data_flag ?
+    reinterpret_cast<uint8_t *>(&scan_packages_.package.package_Head) :
+    reinterpret_cast<uint8_t *>(&scan_packages_.packages.package_Head);
   uint8_t package_sample_num = 0;
   int32_t angle_correct_for_distance = 0;
   int package_recv_pos = 0;
@@ -490,13 +490,13 @@ result_t LidarDataProcessor::wait_package(node_info *node, uint32_t timeout)
       node->distance_q2 = scan_packages_.packages.packageSampleDistance[package_sample_index_] >> 2;
       node->sync_quality =
         static_cast<uint16_t>(
-          scan_packages_.packages.packageSampleDistance[package_sample_index_] & 0x03);
+        scan_packages_.packages.packageSampleDistance[package_sample_index_] & 0x03);
     }
 
     if (node->distance_q2 != 0) {
       angle_correct_for_distance =
         static_cast<int32_t>(
-          atan(19.16 * (node->distance_q2 - 90.15) / (90.15 * node->distance_q2)) * 64);
+        atan(19.16 * (node->distance_q2 - 90.15) / (90.15 * node->distance_q2)) * 64);
     } else {
       angle_correct_for_distance = 0;
     }
@@ -542,7 +542,9 @@ result_t LidarDataProcessor::wait_package(node_info *node, uint32_t timeout)
   return RESULT_OK;
 }
 
-result_t LidarDataProcessor::wait_scan_data(node_info *nodebuffer, size_t &count, uint32_t timeout)
+result_t LidarDataProcessor::wait_scan_data(
+  node_info * nodebuffer, size_t & count,
+  uint32_t timeout)
 {
   if (!lidar_status_->serial_connected) {
     count = 0;
@@ -554,21 +556,18 @@ result_t LidarDataProcessor::wait_scan_data(node_info *nodebuffer, size_t &count
   uint32_t wait_time = 0;
   result_t ans = RESULT_FAIL;
   /*超时处理及点数判断*/
-  while ((wait_time = get_milliseconds() - start_ts) <= timeout && recv_node_count_ < count)
-  {
+  while ((wait_time = get_milliseconds() - start_ts) <= timeout && recv_node_count_ < count) {
     node_info node;
     ans = wait_package(&node, timeout - wait_time);
 
-    if (!IS_OK(ans))
-    {
+    if (!IS_OK(ans)) {
       count = recv_node_count_;
       return ans;
     }
 
     nodebuffer[recv_node_count_++] = node;
 
-    if (node.sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT)
-    {
+    if (node.sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
       size_t size = serial_port_->available();
       uint64_t delay_time = 0;
       size_t package_size =
@@ -576,21 +575,18 @@ result_t LidarDataProcessor::wait_scan_data(node_info *nodebuffer, size_t &count
         INTENSITY_NORMAL_PACKAGE_SIZE :
         NORMAL_PACKAGE_SIZE;
 
-      if (size > PackagePaidBytes && size < PackagePaidBytes * package_size)
-      {
+      if (size > PackagePaidBytes && size < PackagePaidBytes * package_size) {
         size_t package_num = size / package_size;
         size_t number = size % package_size;
         delay_time = package_num * lidar_general_info_.scan_time_increment * package_size / 2;
 
-        if (number > PackagePaidBytes)
-        {
+        if (number > PackagePaidBytes) {
           delay_time += lidar_general_info_.scan_time_increment * ((number - PackagePaidBytes) / 2);
         }
 
         size = number;
 
-        if (package_num > 0 && number == 0)
-        {
+        if (package_num > 0 && number == 0) {
           size = package_size;
         }
       }
@@ -599,8 +595,7 @@ result_t LidarDataProcessor::wait_scan_data(node_info *nodebuffer, size_t &count
       count = recv_node_count_;
       return RESULT_OK;
     }
-    if (recv_node_count_ == count)
-    {
+    if (recv_node_count_ == count) {
       return RESULT_OK;
     }
   }

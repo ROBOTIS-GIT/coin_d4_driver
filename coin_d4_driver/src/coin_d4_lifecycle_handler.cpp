@@ -40,8 +40,8 @@ void CoinD4LifecycleHandler::make_scan_publisher(const std::string & topic_name)
 {
   laser_scan_pub_ =
     node_->create_publisher<sensor_msgs::msg::LaserScan>(
-      topic_name,
-      rclcpp::SensorDataQoS());
+    topic_name,
+    rclcpp::SensorDataQoS());
 }
 
 void CoinD4LifecycleHandler::publish_scan(std::unique_ptr<sensor_msgs::msg::LaserScan> && scan_msg)

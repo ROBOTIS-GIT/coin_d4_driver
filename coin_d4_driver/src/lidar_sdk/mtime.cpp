@@ -7,8 +7,7 @@
 int64_t current_times(int precision)
 {
   auto durations = std::chrono::steady_clock::now().time_since_epoch();
-  switch(precision)
-  {
+  switch (precision) {
     case TIME_NANOSECOND:
       return durations.count();
     case TIME_MICROSECOND:

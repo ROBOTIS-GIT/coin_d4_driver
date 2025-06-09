@@ -65,13 +65,15 @@ public:
   // Send command to lidar
   result_t send_command(uint8_t cmd);
   // Send data to lidar
-  result_t send_data(const uint8_t *data, size_t size);
+  result_t send_data(const uint8_t * data, size_t size);
   // Wait for lidar speed adjustment
   result_t wait_speed_right(uint8_t cmd, uint64_t timeout = DEFAULT_TIMEOUT);
   // Receive lidar scan data
-  result_t wait_scan_data(node_info *nodebuffer, size_t &count, uint32_t timeout = DEFAULT_TIMEOUT);
+  result_t wait_scan_data(
+    node_info * nodebuffer, size_t & count,
+    uint32_t timeout = DEFAULT_TIMEOUT);
   // Parse received lidar data package
-  result_t wait_package(node_info *node, uint32_t timeout = DEFAULT_TIMEOUT);
+  result_t wait_package(node_info * node, uint32_t timeout = DEFAULT_TIMEOUT);
 };
 
 #endif  // COIN_D4_DRIVER__LIDAR_SDK__LIDAR_DATA_PROCESSOR_HPP_

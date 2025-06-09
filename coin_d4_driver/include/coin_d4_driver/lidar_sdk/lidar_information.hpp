@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <vector>
 
-#define FRAME_ANGLE_RANGE (90*256)
+#define FRAME_ANGLE_RANGE (90 * 256)
 #define FRAME_ANGLE_BASE (0xA000)
 
 #define PI 3.141592654
@@ -43,7 +43,7 @@ struct LaserConfig
   float scan_time;
   float min_range;
   float max_range;
-  LaserConfig &operator=(const LaserConfig &data)
+  LaserConfig & operator=(const LaserConfig & data)
   {
     min_angle = data.min_angle;
     max_angle = data.max_angle;
@@ -75,13 +75,13 @@ typedef enum
   DEFAULT_HEART_BEAT = 1000,
   MAX_SCAN_NODES = 800,
   DEFAULT_TIMEOUT_COUNT = 10,
-}TIME_CHECK;
+} TIME_CHECK;
 
 typedef enum
 {
   LIDAR_FOR_MOTION = 0,
   LIDAR_FOR_BLOCKED = 1,
-}MOTION_AND_BLOCKED;
+} MOTION_AND_BLOCKED;
 
 #define RESULT_OK 0
 #define RESULT_TIMEOUT -1
@@ -107,13 +107,13 @@ typedef enum
   CT_Tail,
 } CT;
 
-typedef enum{
+typedef enum
+{
   M1C1_Mini_v1 = 1,
   M1C1_Mini_v2,
   M1CT_Coin_Plus,
   M1CT_TOF,
-}LIDAR_VERSION;
-
+} LIDAR_VERSION;
 
 
 #define Node_Default_Quality (10)
@@ -158,11 +158,12 @@ struct node_package_coin
   uint8_t speedH;
   uint8_t startAngleL;
   uint8_t startAngleH;
-  struct{
+  struct
+  {
     uint8_t d0;
     uint8_t d1;
     uint8_t d2;
-  }data[8];
+  } data[8];
   uint8_t stopAngleL;
   uint8_t stopAngleH;
   uint8_t csL;
@@ -189,19 +190,21 @@ struct node_Gyro
 };
 
 
-struct cmd_packet {
+struct cmd_packet
+{
   uint8_t syncByte;
   uint8_t cmd_flag;
   uint8_t size;
   uint8_t data;
-} __attribute__((packed)) ;
+} __attribute__((packed));
 
-struct lidar_ans_header {
-  uint8_t  syncByte1;
-  uint8_t  syncByte2;
-  uint32_t size: 30;
-  uint32_t subType: 2;
-  uint8_t  type;
+struct lidar_ans_header
+{
+  uint8_t syncByte1;
+  uint8_t syncByte2;
+  uint32_t size : 30;
+  uint32_t subType : 2;
+  uint8_t type;
 } __attribute__((packed));
 
 struct LaserPoint
@@ -225,7 +228,7 @@ struct LaserScan
   uint64_t stamp;
   std::vector<LaserPoint> points;
   LaserConfig config;
-  LaserScan &operator=(const LaserScan &data)
+  LaserScan & operator=(const LaserScan & data)
   {
     this->points = data.points;
     this->stamp = data.stamp;

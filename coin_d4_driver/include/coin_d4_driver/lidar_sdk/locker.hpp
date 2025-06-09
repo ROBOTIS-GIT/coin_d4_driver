@@ -46,52 +46,46 @@ public:
   {
 #ifdef _WIN32
 
-    switch (WaitForSingleObject(_lock,
-                                timeout == 0xFFFFFFF ? INFINITE : (DWORD)timeout))
+    switch (WaitForSingleObject(
+        _lock,
+        timeout == 0xFFFFFFF ? INFINITE : (DWORD)timeout))
     {
-    case WAIT_ABANDONED:
-      return LOCK_FAILED;
+      case WAIT_ABANDONED:
+        return LOCK_FAILED;
 
-    case WAIT_OBJECT_0:
-      return LOCK_OK;
+      case WAIT_OBJECT_0:
+        return LOCK_OK;
 
-    case WAIT_TIMEOUT:
-      return LOCK_TIMEOUT;
+      case WAIT_TIMEOUT:
+        return LOCK_TIMEOUT;
     }
 
 #else
 #ifdef _MACOS
 
-    if (timeout != 0)
-    {
-      if (pthread_mutex_lock(&_lock) == 0)
-      {
+    if (timeout != 0) {
+      if (pthread_mutex_lock(&_lock) == 0) {
         return LOCK_OK;
       }
     }
 
 #else
 
-    if (timeout == 0xFFFFFFFF)
-    {
-      if (pthread_mutex_lock(&_lock) == 0)
-      {
+    if (timeout == 0xFFFFFFFF) {
+      if (pthread_mutex_lock(&_lock) == 0) {
         return LOCK_OK;
       }
     }
 
 #endif
-    else if (timeout == 0)
-    {
-      if (pthread_mutex_trylock(&_lock) == 0)
-      {
+    else if (timeout == 0) {
+      if (pthread_mutex_trylock(&_lock) == 0) {
         return LOCK_OK;
       }
     }
 
 #ifndef _MACOS
-    else
-    {
+    else {
       timespec wait_time;
       timeval now;
       gettimeofday(&now, NULL);
@@ -99,21 +93,19 @@ public:
       wait_time.tv_sec = timeout / 1000 + now.tv_sec;
       wait_time.tv_nsec = (timeout % 1000) * 1000000 + now.tv_usec * 1000;
 
-      if (wait_time.tv_nsec >= 1000000000)
-      {
+      if (wait_time.tv_nsec >= 1000000000) {
         ++wait_time.tv_sec;
         wait_time.tv_nsec -= 1000000000;
       }
 
 #if !defined(__ANDROID__)
 
-      switch (pthread_mutex_timedlock(&_lock, &wait_time))
-      {
-      case 0:
-        return LOCK_OK;
+      switch (pthread_mutex_timedlock(&_lock, &wait_time)) {
+        case 0:
+          return LOCK_OK;
 
-      case ETIMEDOUT:
-        return LOCK_TIMEOUT;
+        case ETIMEDOUT:
+          return LOCK_TIMEOUT;
       }
 
 #else
@@ -123,12 +115,11 @@ public:
       sleepytime.tv_sec = 0;
       sleepytime.tv_nsec = 10000000; /* 10ms */
 
-      while (pthread_mutex_trylock(&_lock) == EBUSY)
-      {
+      while (pthread_mutex_trylock(&_lock) == EBUSY) {
         gettimeofday(&timenow, NULL);
 
         if (timenow.tv_sec >= wait_time.tv_sec &&
-            (timenow.tv_usec * 1000) >= wait_time.tv_nsec)
+          (timenow.tv_usec * 1000) >= wait_time.tv_nsec)
         {
           return LOCK_TIMEOUT;
         }
@@ -162,7 +153,7 @@ public:
     return _lock;
   }
 #else
-  pthread_mutex_t *getLockHandle()
+  pthread_mutex_t * getLockHandle()
   {
     return &_lock;
   }
@@ -183,8 +174,7 @@ protected:
     unlock();
 #ifdef _WIN32
 
-    if (_lock)
-    {
+    if (_lock) {
       CloseHandle(_lock);
     }
 
@@ -213,19 +203,19 @@ public:
 
   explicit Event(bool isAutoReset = true, bool isSignal = false)
 #ifdef _WIN32
-      : _event(NULL)
+  : _event(NULL)
 #else
-      : _is_signalled(isSignal), _isAutoReset(isAutoReset)
+  : _is_signalled(isSignal), _isAutoReset(isAutoReset)
 #endif
   {
 #ifdef _WIN32
-    _event = CreateEvent(NULL, isAutoReset ? FALSE : TRUE, isSignal ? TRUE : FALSE,
-                         NULL);
+    _event = CreateEvent(
+      NULL, isAutoReset ? FALSE : TRUE, isSignal ? TRUE : FALSE,
+      NULL);
 #else
     int ret = pthread_condattr_init(&_cond_cattr);
 
-    if (ret != 0)
-    {
+    if (ret != 0) {
       fprintf(stderr, "Failed to init condattr...\n");
       fflush(stderr);
     }
@@ -243,15 +233,13 @@ public:
 
   void set(bool isSignal = true)
   {
-    if (isSignal)
-    {
+    if (isSignal) {
 #ifdef _WIN32
       SetEvent(_event);
 #else
       pthread_mutex_lock(&_cond_locker);
 
-      if (_is_signalled == false)
-      {
+      if (_is_signalled == false) {
         _is_signalled = true;
         pthread_cond_signal(&_cond_var);
       }
@@ -273,17 +261,18 @@ public:
   {
 #ifdef _WIN32
 
-    switch (WaitForSingleObject(_event,
-                                timeout == 0xFFFFFFF ? INFINITE : (DWORD)timeout))
+    switch (WaitForSingleObject(
+        _event,
+        timeout == 0xFFFFFFF ? INFINITE : (DWORD)timeout))
     {
-    case WAIT_FAILED:
-      return EVENT_FAILED;
+      case WAIT_FAILED:
+        return EVENT_FAILED;
 
-    case WAIT_OBJECT_0:
-      return EVENT_OK;
+      case WAIT_OBJECT_0:
+        return EVENT_OK;
 
-    case WAIT_TIMEOUT:
-      return EVENT_TIMEOUT;
+      case WAIT_TIMEOUT:
+        return EVENT_TIMEOUT;
     }
 
     return EVENT_OK;
@@ -291,10 +280,8 @@ public:
     uint64_t ans = EVENT_OK;
     pthread_mutex_lock(&_cond_locker);
 
-    if (!_is_signalled)
-    {
-      if (timeout == 0xFFFFFFFF)
-      {
+    if (!_is_signalled) {
+      if (timeout == 0xFFFFFFFF) {
         pthread_cond_wait(&_cond_var, &_cond_locker);
       } else {
         struct timespec wait_time;
@@ -303,39 +290,36 @@ public:
         wait_time.tv_sec += timeout / 1000;
         wait_time.tv_nsec += (timeout % 1000) * 1000000ULL;
 
-        if (wait_time.tv_nsec >= 1000000000)
-        {
+        if (wait_time.tv_nsec >= 1000000000) {
           ++wait_time.tv_sec;
           wait_time.tv_nsec -= 1000000000;
         }
 
-        switch (pthread_cond_timedwait(&_cond_var, &_cond_locker, &wait_time))
-        {
-        case 0:
-          // signalled
-          break;
+        switch (pthread_cond_timedwait(&_cond_var, &_cond_locker, &wait_time)) {
+          case 0:
+            // signalled
+            break;
 
-        case ETIMEDOUT:
-          // time up
-          ans = EVENT_TIMEOUT;
-          goto _final;
-          break;
+          case ETIMEDOUT:
+            // time up
+            ans = EVENT_TIMEOUT;
+            goto _final;
+            break;
 
-        default:
-          ans = EVENT_FAILED;
-          goto _final;
+          default:
+            ans = EVENT_FAILED;
+            goto _final;
         }
       }
     }
 
     assert(_is_signalled);
 
-    if (_isAutoReset)
-    {
+    if (_isAutoReset) {
       _is_signalled = false;
     }
 
-  _final:
+_final:
     pthread_mutex_unlock(&_cond_locker);
 
     return ans;
@@ -368,7 +352,8 @@ protected:
 class ScopedLocker
 {
 public:
-  explicit ScopedLocker(Locker &l) : _binded(l)
+  explicit ScopedLocker(Locker & l)
+  : _binded(l)
   {
     _binded.lock();
   }
@@ -381,5 +366,5 @@ public:
   {
     _binded.unlock();
   }
-  Locker &_binded;
+  Locker & _binded;
 };

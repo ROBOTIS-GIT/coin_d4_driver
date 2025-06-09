@@ -58,8 +58,7 @@ void CoinD4BaseHandler::init_structs()
     declare_parameter_once(parameter_prefix_ + "reverse", false);
   lidar_general_info_.warmup_time =
     declare_parameter_once(parameter_prefix_ + "warmup_time", 0);
-  switch (lidar_general_info_.version)
-  {
+  switch (lidar_general_info_.version) {
     case M1C1_Mini_v1:
       RCLCPP_INFO(logging_interface_->get_logger(), "version M1C1_Mini_v1");
       lidar_general_info_.serial_baud_rate = 115200;
@@ -88,10 +87,10 @@ void CoinD4BaseHandler::init_structs()
 
   lidar_data_processor_ =
     std::make_shared<LidarDataProcessor>(
-      lidar_time_.get(),
-      lidar_status_.get(),
-      lidar_general_info_,
-      scan_packages_);
+    lidar_time_.get(),
+    lidar_status_.get(),
+    lidar_general_info_,
+    scan_packages_);
 
   if (lidar_general_info_.version == M1C1_Mini_v1) {
     lidar_data_processor_->package_sample_bytes_ = 2;
@@ -127,9 +126,9 @@ bool CoinD4BaseHandler::init_lidar_port()
 
   serial_port_ =
     std::make_shared<SerialPort>(
-      lidar_general_info_.port,
-      lidar_general_info_.serial_baud_rate,
-      Timeout::simpleTimeout(DEFAULT_TIMEOUT));
+    lidar_general_info_.port,
+    lidar_general_info_.serial_baud_rate,
+    Timeout::simpleTimeout(DEFAULT_TIMEOUT));
 
   if (!serial_port_->open()) {
     RCLCPP_ERROR(logging_interface_->get_logger(), "Failed to open lidar port");
@@ -144,7 +143,7 @@ bool CoinD4BaseHandler::init_lidar_port()
 
 void CoinD4BaseHandler::flush_serial()
 {
-  if (!lidar_status_->serial_connected){
+  if (!lidar_status_->serial_connected) {
     return;
   }
 
@@ -160,7 +159,7 @@ void CoinD4BaseHandler::flush_serial()
 
 void CoinD4BaseHandler::activate_grab_thread()
 {
-  if (!lidar_status_->serial_connected){
+  if (!lidar_status_->serial_connected) {
     return;
   }
 
@@ -184,12 +183,12 @@ void CoinD4BaseHandler::activate_grab_thread()
           count = 128;
           ans = lidar_data_processor_->wait_scan_data(local_buf, count);
           if (!IS_OK(ans)) {
-            if (current_times() - lidar_time_->system_start_time > 3000 ) {
+            if (current_times() - lidar_time_->system_start_time > 3000) {
               if (!lidar_status_->lidar_restart_try) {
                 RCLCPP_WARN(logging_interface_->get_logger(), "Tried to restart lidar");
                 lidar_status_->lidar_restart_try = true;
                 lidar_status_->lidar_trap_restart = true;
-              } else{
+              } else {
                 RCLCPP_WARN(logging_interface_->get_logger(), "Detected lidar stuck");
                 lidar_status_->lidar_abnormal_state |= 0x01;
                 usleep(100);
@@ -207,11 +206,11 @@ void CoinD4BaseHandler::activate_grab_thread()
                 local_scan[0].scan_frequency = local_buf[pos].scan_frequency;
 
                 // If frequency is abnormal for over 30 seconds, trigger abnormal state
-                if(local_scan[0].scan_frequency > 200 || local_scan[0].scan_frequency < 10) {
-                  if(current_times() - lidar_time_->lidar_frequency_abnormal_time > 30000) {
+                if (local_scan[0].scan_frequency > 200 || local_scan[0].scan_frequency < 10) {
+                  if (current_times() - lidar_time_->lidar_frequency_abnormal_time > 30000) {
                     lidar_status_->lidar_abnormal_state |= 0x02;
                   }
-                } else{
+                } else {
                   lidar_time_->lidar_frequency_abnormal_time = current_times();
                 }
 
@@ -230,12 +229,11 @@ void CoinD4BaseHandler::activate_grab_thread()
               scan_count = 0;
             }
             local_scan[scan_count++] = local_buf[pos];
-            if (scan_count == _countof(local_scan))
-            {
+            if (scan_count == _countof(local_scan)) {
               scan_count -= 1;
             }
           }
-        } else{
+        } else {
           flush_serial();
           delay(100);
         }
@@ -252,7 +250,7 @@ void CoinD4BaseHandler::activate_grab_thread()
 
 void CoinD4BaseHandler::deactivate_grab_thread()
 {
-  if (!lidar_status_->serial_connected){
+  if (!lidar_status_->serial_connected) {
     return;
   }
   skip_grab_ = true;
@@ -273,7 +271,7 @@ void CoinD4BaseHandler::deactivate_grab_thread()
 
 void CoinD4BaseHandler::activate_publish_thread()
 {
-  if (!lidar_status_->serial_connected){
+  if (!lidar_status_->serial_connected) {
     return;
   }
   skip_publish_ = false;
@@ -370,8 +368,7 @@ bool CoinD4BaseHandler::judge_lidar_state(bool & wait_speed_right, uint64_t & li
 
   if (lidar_status_->lidar_ready && !wait_speed_right) {
     if (current_times() - lidar_status_time > 1000) {
-      switch (lidar_general_info_.version)
-      {
+      switch (lidar_general_info_.version) {
         case M1C1_Mini_v1:
           RCLCPP_INFO(
             logging_interface_->get_logger(),
@@ -415,12 +412,13 @@ bool CoinD4BaseHandler::grab_synchronized_data(LaserScan & outscan)
   if (check_data_synchronization(2000) == RESULT_OK) {
     parse_lidar_serial_data(outscan);
     return true;
-  } else{
+  } else {
     return false;
   }
 }
 
-result_t CoinD4BaseHandler::check_data_synchronization(uint32_t timeout) {
+result_t CoinD4BaseHandler::check_data_synchronization(uint32_t timeout)
+{
   switch (data_event_.wait(timeout)) {
     case Event::EVENT_TIMEOUT:
       return RESULT_TIMEOUT;
@@ -454,7 +452,7 @@ void CoinD4BaseHandler::parse_lidar_serial_data(LaserScan & outscan)
     outscan.config.max_angle = 2 * M_PI;
     outscan.config.min_range = 0.10;
     outscan.config.max_range = 100.0;
-    outscan.config.scan_time =  static_cast<float>(scan_time * 1.0 / 1e9);
+    outscan.config.scan_time = static_cast<float>(scan_time * 1.0 / 1e9);
     outscan.config.time_increment = outscan.config.scan_time / static_cast<double>(count - 1);
     outscan.stamp = lidar_time_->scan_start_time;
 
@@ -467,14 +465,14 @@ void CoinD4BaseHandler::parse_lidar_serial_data(LaserScan & outscan)
         LaserPoint point_check;
         angle =
           static_cast<float>(
-            (scan_node_buf_[count -i].angle_q6_checkbit >>
-              LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) /64.0f);
+          (scan_node_buf_[count - i].angle_q6_checkbit >>
+          LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f);
         range = (scan_node_buf_[i].distance_q2 / 1000.0f);
         intensity = scan_node_buf_[i].sync_quality;
 
-        if(scan_node_buf_[i].exp_m == 1) {
+        if (scan_node_buf_[i].exp_m == 1) {
           intensity = 255;
-        } else{
+        } else {
           if (intensity >= 255) {
             intensity = 254;
           }
@@ -484,7 +482,7 @@ void CoinD4BaseHandler::parse_lidar_serial_data(LaserScan & outscan)
         point_check.range = range;
         point_check.intensity = intensity;
 
-        if(0 <= angle && angle <= 360) {
+        if (0 <= angle && angle <= 360) {
           point.range = range;
           point.angle = angle;
           point.intensity = intensity;
