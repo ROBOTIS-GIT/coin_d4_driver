@@ -45,26 +45,17 @@ struct LidarTimeStatus
   uint64_t tim_scan_end = 0;
   uint64_t scan_start_time = 0;
   uint64_t scan_end_time = 0;
-  uint64_t lidar_frequence_abnormal_time = 0;
+  uint64_t lidar_frequency_abnormal_time = 0;
 };
 
 // LiDAR hardware status
 struct LidarHardwareStatus
 {
-  bool FilterEnable = true;           // 是否需要滤波
-  bool GyroCompensateEnable = false; // 是否要做旋转角度补偿
-  bool isConnected = false;          // 串口连接状体
-  bool slam_user = false;
-  bool encry_lidar = false;
-  bool optimize_enable = true;
-  bool lidar_cover = false;
-  bool disable_encry = false;
-  bool able_exposure = false;
-  bool low_exposure = false;
+  bool serial_connected = false;
   bool lidar_ready = false;
   bool lidar_last_status =false;
   bool close_lidar = true;
-  bool lidar_trap_restart = false;    //雷达卡住重启状态
+  bool lidar_trap_restart = false;
 
   bool lidar_restart_try = false;
 

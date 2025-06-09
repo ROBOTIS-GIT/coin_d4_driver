@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>coin_d4_driver</name>
-  <version>0.3.1</version>
+  <version>1.0.0</version>
   <description>ros driver for coin d4 lidar</description>
   <maintainer email="jhj@robotis.com">Hyeongjun Jeon</maintainer>
   <license>Apache 2.0</license>

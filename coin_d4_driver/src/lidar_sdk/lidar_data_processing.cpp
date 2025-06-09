@@ -626,7 +626,7 @@ result_t Lidar_Data_Processing::waitPackage(node_info *node, uint32_t timeout)
 
 result_t Lidar_Data_Processing::waitScanData(node_info *nodebuffer, size_t &count, uint32_t timeout)
 {
-  if(!lidar_status_->isConnected)
+  if(!lidar_status_->serial_connected)
   {
     count = 0;
     return RESULT_FAIL;

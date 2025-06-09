@@ -99,7 +99,7 @@ void CoinD4BaseHandler::init_structs()
     lidar_data_processing_->PackageSampleBytes = 3;
   }
 
-  if(!init_lidar_port()){
+  if (!init_lidar_port()) {
     RCLCPP_WARN(logging_interface_->get_logger(), "Lidar port is wrong");
     return;
   }
@@ -109,7 +109,7 @@ void CoinD4BaseHandler::init_structs()
 
 bool CoinD4BaseHandler::init_lidar_port()
 {
-  if (lidar_status_->isConnected) {
+  if (lidar_status_->serial_connected) {
     return true;
   }
   if (parameter_prefix_.empty()) {
@@ -136,7 +136,7 @@ bool CoinD4BaseHandler::init_lidar_port()
     return false;
   }
 
-  lidar_status_->isConnected = true;
+  lidar_status_->serial_connected = true;
   sleep_ms(100);
   serial_port_->setDTR(0);
   return true;
@@ -144,7 +144,7 @@ bool CoinD4BaseHandler::init_lidar_port()
 
 void CoinD4BaseHandler::flush_serial()
 {
-  if (!lidar_status_->isConnected){
+  if (!lidar_status_->serial_connected){
     return;
   }
 
@@ -160,7 +160,7 @@ void CoinD4BaseHandler::flush_serial()
 
 void CoinD4BaseHandler::activate_grab_thread()
 {
-  if (!lidar_status_->isConnected){
+  if (!lidar_status_->serial_connected){
     return;
   }
 
@@ -208,11 +208,11 @@ void CoinD4BaseHandler::activate_grab_thread()
 
                 // If frequency is abnormal for over 30 seconds, trigger abnormal state
                 if(local_scan[0].scan_frequence > 200 || local_scan[0].scan_frequence < 10) {
-                  if(current_times() - lidar_time_->lidar_frequence_abnormal_time > 30000) {
+                  if(current_times() - lidar_time_->lidar_frequency_abnormal_time > 30000) {
                     lidar_status_->lidar_abnormal_state |= 0x02;
                   }
                 } else{
-                  lidar_time_->lidar_frequence_abnormal_time = current_times();
+                  lidar_time_->lidar_frequency_abnormal_time = current_times();
                 }
 
                 lock_.lock();
@@ -252,7 +252,7 @@ void CoinD4BaseHandler::activate_grab_thread()
 
 void CoinD4BaseHandler::deactivate_grab_thread()
 {
-  if (!lidar_status_->isConnected){
+  if (!lidar_status_->serial_connected){
     return;
   }
   skip_grab_ = true;
@@ -273,7 +273,7 @@ void CoinD4BaseHandler::deactivate_grab_thread()
 
 void CoinD4BaseHandler::activate_publish_thread()
 {
-  if (!lidar_status_->isConnected){
+  if (!lidar_status_->serial_connected){
     return;
   }
   skip_publish_ = false;
@@ -403,7 +403,7 @@ bool CoinD4BaseHandler::judge_lidar_state(bool & wait_speed_right, uint64_t & li
           break;
       }
     }
-    lidar_time_->lidar_frequence_abnormal_time = current_times();
+    lidar_time_->lidar_frequency_abnormal_time = current_times();
     lidar_time_->system_start_time = current_times();
   }
 
@@ -458,7 +458,7 @@ void CoinD4BaseHandler::parse_lidar_serial_data(LaserScan & outscan)
     outscan.config.time_increment = outscan.config.scan_time / static_cast<double>(count - 1);
     outscan.stamp = lidar_time_->scan_start_time;
 
-    if (lidar_status_->isConnected) {
+    if (lidar_status_->serial_connected) {
       float range = std::numeric_limits<float>::quiet_NaN();
       float angle = std::numeric_limits<float>::quiet_NaN();
       uint16_t intensity = std::numeric_limits<float>::quiet_NaN();
