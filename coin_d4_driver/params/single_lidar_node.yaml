@@ -5,5 +5,5 @@
     baudrate: 230400
     version: 4
     topic_name: "sensor/msg/scan"
-    reverse: False
+    reverse: True
     warmup_time: 5  # seconds
