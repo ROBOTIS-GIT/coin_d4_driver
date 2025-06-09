@@ -180,7 +180,7 @@ struct node_package_coin
 #define LIDAR_RESP_MEASUREMENT_ANGLE_SAMPLE_SHIFT 8
 #define LIDAR_RESP_MEASUREMENT_SYNCBIT (0x1 << 0)
 #define LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT 1
-#define _countof(_Array) (int)(sizeof(_Array) / sizeof(_Array[0]))
+#define _countof(_Array) static_cast<int>(sizeof(_Array) / sizeof(_Array[0]))
 
 struct node_Gyro
 {
