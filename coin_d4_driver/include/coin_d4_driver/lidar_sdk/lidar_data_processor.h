@@ -12,7 +12,6 @@
 #include "coin_d4_driver/lidar_sdk/timer.h"
 #include "coin_d4_driver/lidar_sdk/handling_info.hpp"
 
-
 class LidarDataProcessor
 {
 private:
@@ -21,28 +20,28 @@ private:
   uint16_t sample_numl_and_ct_cal_;
   uint16_t last_sample_angle_calculated_;
   uint16_t check_sum_16_value_holder_;
-  uint16_t package_sample_index_; //包采样点索引
-  uint16_t first_sample_angle_;     //起始采样角
-  uint16_t last_sample_angle_;      //结束采样角
-  uint8_t scan_frequency;	       //协议中雷达转速
+  uint16_t package_sample_index_;
+  uint16_t first_sample_angle_;
+  uint16_t last_sample_angle_;
+  uint8_t scan_frequency_;
   bool check_sum_result_;
-  bool has_package_error;
+  bool has_package_error_;
   float interval_sample_angle_;
   float interval_sample_angle_last_package_;
-  int package_index;
+  int package_index_;
 
-  float start_t =0;
-  float stop_t = 0;
-  float angle_new = 0;
-  float angle_bak = 0;
-  size_t recvNodeCount;
+  float start_t_ = 0;
+  float stop_t_ = 0;
+  float angle_new_ = 0;
+  float angle_bak_ = 0;
+  size_t recv_node_count_ = 0;
 
-  uint64_t m_node_time_ns;			 //< time stamp
-  uint64_t m_node_last_time_ns;  //< time stamp
-  uint32_t scan_time_increment;				   //< two laser point time intervals
-  size_t buffer_size = 0;
+  uint64_t node_time_ns_;
+  uint64_t node_last_time_ns_;
+  uint32_t scan_time_increment_;
+  size_t buffer_size_ = 0;
 
-  uint8_t * globalRecvBuffer;
+  uint8_t * global_recv_buffer_;
 
   Serial_Port * serial_port_;
   LidarTimeStatus * lidar_time_;
@@ -52,7 +51,6 @@ private:
   uint32_t trans_delay_ = 0;
 
 public:
-
   LidarDataProcessor(
     LidarTimeStatus * lidar_time,
     LidarHardwareStatus * lidar_status,
@@ -62,22 +60,18 @@ public:
 
   void set_serial_port(Serial_Port * serial_port);
 
-  int PackageSampleBytes;   //一个包包含的激光点数
+  int package_sample_bytes_;
 
-  /*向激光雷达发布指令*/
-  //result_t sendCommand(uint8_t cmd,const void *payload = NULL,size_t payloadsize = 0);
-  result_t sendCommand(uint8_t cmd);
-  /*向激光雷达写数据*/
-  result_t sendData(const uint8_t *data, size_t size);
-
-  /*等待激光雷达调速完成*/
-  result_t waitSpeedRight(uint8_t cmd,uint64_t timeout = DEFAULT_TIMEOUT);
-
-  /*接收串口上传的雷达数据*/
-  result_t waitScanData(node_info *nodebuffer, size_t &count,uint32_t timeout = DEFAULT_TIMEOUT);
-
-  /*解析接收到的雷达数据点（v1及v2版本）*/
-  result_t waitPackage(node_info *node,uint32_t timeout = DEFAULT_TIMEOUT);
+  // Send command to lidar
+  result_t send_command(uint8_t cmd);
+  // Send data to lidar
+  result_t send_data(const uint8_t *data, size_t size);
+  // Wait for lidar speed adjustment
+  result_t wait_speed_right(uint8_t cmd, uint64_t timeout = DEFAULT_TIMEOUT);
+  // Receive lidar scan data
+  result_t wait_scan_data(node_info *nodebuffer, size_t &count, uint32_t timeout = DEFAULT_TIMEOUT);
+  // Parse received lidar data package
+  result_t wait_package(node_info *node, uint32_t timeout = DEFAULT_TIMEOUT);
 };
 
 #endif  // COIN_D4_DRIVER__LIDAR_SDK__LIDAR_DATA_PROCESSOR_H_

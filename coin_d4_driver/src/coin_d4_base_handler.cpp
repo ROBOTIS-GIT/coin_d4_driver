@@ -86,7 +86,7 @@ void CoinD4BaseHandler::init_structs()
       break;
   }
 
-  lidar_data_processing_ =
+  lidar_data_processor_ =
     std::make_shared<LidarDataProcessor>(
       lidar_time_.get(),
       lidar_status_.get(),
@@ -94,16 +94,16 @@ void CoinD4BaseHandler::init_structs()
       scan_packages_);
 
   if (lidar_general_info_.version == M1C1_Mini_v1) {
-    lidar_data_processing_->PackageSampleBytes = 2;
+    lidar_data_processor_->package_sample_bytes_ = 2;
   } else {
-    lidar_data_processing_->PackageSampleBytes = 3;
+    lidar_data_processor_->package_sample_bytes_ = 3;
   }
 
   if (!init_lidar_port()) {
     RCLCPP_WARN(logging_interface_->get_logger(), "Lidar port is wrong");
     return;
   }
-  lidar_data_processing_->set_serial_port(serial_port_.get());
+  lidar_data_processor_->set_serial_port(serial_port_.get());
   scan_node_buf_ = new node_info[1000];
 }
 
@@ -182,7 +182,7 @@ void CoinD4BaseHandler::activate_grab_thread()
         bool state_judge = judge_lidar_state(wait_speed_right, lidar_status_time);
         if (state_judge) {
           count = 128;
-          ans = lidar_data_processing_->waitScanData(local_buf, count);
+          ans = lidar_data_processor_->wait_scan_data(local_buf, count);
           if (!IS_OK(ans)) {
             if (current_times() - lidar_time_->system_start_time > 3000 ) {
               if (!lidar_status_->lidar_restart_try) {

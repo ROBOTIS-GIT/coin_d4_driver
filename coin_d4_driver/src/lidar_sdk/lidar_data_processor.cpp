@@ -10,7 +10,6 @@
 #include "coin_d4_driver/lidar_sdk/lidar_data_processor.h"
 #include "coin_d4_driver/lidar_sdk/mtime.h"
 
-
 LidarDataProcessor::LidarDataProcessor(
   LidarTimeStatus * lidar_time,
   LidarHardwareStatus * lidar_status,
@@ -27,25 +26,24 @@ LidarDataProcessor::LidarDataProcessor(
   package_sample_index_ = 0;
   first_sample_angle_ = 0;
   last_sample_angle_ = 0;
-  scan_frequency = 0;
+  scan_frequency_ = 0;
   check_sum_result_ = false;
-  has_package_error = false;
+  has_package_error_ = false;
   interval_sample_angle_ = 0.0f;
   interval_sample_angle_last_package_ = 0.0;
-  PackageSampleBytes = 2;
-  package_index = 0;
-  recvNodeCount = 0;
-  start_t = 0;
+  package_sample_bytes_ = 2;
+  package_index_ = 0;
+  recv_node_count_ = 0;
+  start_t_ = 0;
 
-  globalRecvBuffer = new uint8_t[sizeof(node_packages)];
+  global_recv_buffer_ = new uint8_t[sizeof(node_packages)];
 }
 
 LidarDataProcessor::~LidarDataProcessor()
 {
-  if (globalRecvBuffer)
-  {
-    delete[] globalRecvBuffer;
-    globalRecvBuffer = NULL;
+  if (global_recv_buffer_) {
+    delete[] global_recv_buffer_;
+    global_recv_buffer_ = nullptr;
   }
 }
 
@@ -58,484 +56,425 @@ void LidarDataProcessor::set_serial_port(Serial_Port * serial_port)
 /************************************************************************/
 /*  向激光雷达发布控制指令　Issue control command to lidar                  */
 /************************************************************************/
-result_t LidarDataProcessor::sendCommand(uint8_t cmd)
+result_t LidarDataProcessor::send_command(uint8_t cmd)
 {
   uint8_t pkt_header[10];
 
-  switch (cmd)
-  {
+  switch (cmd) {
     case 0x60:
       break;
     case 0x65:
       break;
     case 0x63:
-      pkt_header[0]=0xAA;
-      pkt_header[1]=0x55;
-      pkt_header[2]=0xF0;
-      pkt_header[3]=0x0F;
-      serial_port_->write_data(pkt_header,4);
-    break;
-  default:
-    break;
+      pkt_header[0] = 0xAA;
+      pkt_header[1] = 0x55;
+      pkt_header[2] = 0xF0;
+      pkt_header[3] = 0x0F;
+      serial_port_->write_data(pkt_header, 4);
+      break;
+    default:
+      break;
   }
   //add by jiang
   return 0;
 }
 
-result_t LidarDataProcessor::sendData(const uint8_t *data, size_t size)
+result_t LidarDataProcessor::send_data(const uint8_t *data, size_t size)
 {
 
-  if (data == NULL || size == 0)
-  {
+  if (data == nullptr || size == 0) {
     return RESULT_FAIL;
   }
 
-  size_t r;
+  size_t written_size;
 
-  while (size)
-  {
-    r = serial_port_->write_data(data, size);
+  while (size) {
+    written_size = serial_port_->write_data(data, size);
 
-    if (r < 1)
-    {
+    if (written_size < 1) {
       return RESULT_FAIL;
     }
 
-    size -= r;
-    data += r;
+    size -= written_size;
+    data += written_size;
   }
   return RESULT_OK;
 }
 
-result_t LidarDataProcessor::waitSpeedRight(uint8_t cmd,uint64_t timeout)
+result_t LidarDataProcessor::wait_speed_right(uint8_t /*cmd*/, uint64_t timeout)
+// 'cmd' is unused, so use /*cmd*/ to avoid unused parameter warning
 {
-    int  recvPos     = 0;
-    uint32_t startTs = get_milliseconds();
-    uint8_t  recvBuffer[100];
-    uint32_t waitTime = 0;
-    //uint16_t data_count = 0;
-    uint16_t check_sum_cal = 0;  //校验和
-    uint16_t data_check_sum = 0; //累加数据
-    //uint8_t check_data[4];
-    bool head_right = false;
+  int recv_pos = 0;
+  uint32_t start_ts = get_milliseconds();
+  uint8_t recv_buffer[100];
+  uint32_t wait_time = 0;
+  uint16_t check_sum_cal = 0;
+  uint16_t data_check_sum = 0;
+  bool head_right = false;
+  uint16_t data_length = 0;
 
-    uint16_t data_lenth = 0; //数据长度
-
-    while ((waitTime = get_milliseconds() - startTs) <= timeout){
-      size_t remainSize = 9;
-      size_t recvSize = 0;
-      result_t ans = serial_port_->waitForData(remainSize, timeout - waitTime, &recvSize);
-      if (!IS_OK(ans)) {
-        return ans;
-      }
-      if (recvSize >= remainSize) {
-        recvSize = remainSize - recvPos;
-      }
-      ans = serial_port_->read_data(recvBuffer, recvSize);
-      if (IS_FAIL(ans)) {
-        printf("read waitResponseHeader fail\n");
-        return RESULT_FAIL;
-      }
-      for (size_t pos = 0; pos < recvSize; ++pos) {
-        uint8_t currentByte = recvBuffer[pos];
-        switch (recvPos) {
-          case 0:
-            if(currentByte == 0xFA){
-              printf("head_speed_000=%x\n",currentByte);
-            }else{
-              continue;
-            }
-            break;
-
-          case 1:
-            if(currentByte == 0xFA){
-              printf("head_speed_111=%x\n",currentByte);
-            }else{
-              continue;
-            }
-            break;
-
-          case 2:
-            if(currentByte == 0xA5){
-              printf("head_speed_222=%x\n",currentByte);
-              data_check_sum+=currentByte;
-            }else{
-              continue;
-            }
-            break;
-
-          case 3:
-            if(currentByte == 0x5A){
-              printf("head_speed_333=%x\n",currentByte);
-              data_check_sum+=currentByte;
-            }else{
-              continue;
-            }
-            break;
-
-          case 4:
-            data_lenth = currentByte;
-            data_check_sum+=currentByte;
-            printf("head_speed_444=%x\n",currentByte);
-            break;
-
-          case 5:
-            data_lenth += (currentByte * 0x100);
-            data_check_sum+=currentByte;
-            printf("head_speed_555=%x\n",currentByte);
-            break;
-
-          case 6:
-            check_sum_cal = currentByte;
-            printf("head_speed_666=%x\n",currentByte);
-            break;
-
-          case 7:
-            check_sum_cal += (currentByte * 0x100);
-            printf("head_speed_777=%x\n",currentByte);
-            break;
-
-          case 8:
-            if(currentByte==0x01)
-            {
-              printf("head_speed_888=%x count=%d\n",currentByte,recvPos);
-              data_check_sum+=currentByte;
-              head_right = true;
-            }
-          default:
-                break;
+  while ((wait_time = get_milliseconds() - start_ts) <= timeout) {
+    size_t remain_size = 9;
+    size_t recv_size = 0;
+    result_t ans = serial_port_->waitForData(remain_size, timeout - wait_time, &recv_size);
+    if (!IS_OK(ans)) {
+      return ans;
+    }
+    if (recv_size >= remain_size) {
+      recv_size = remain_size - recv_pos;
+    }
+    ans = serial_port_->read_data(recv_buffer, recv_size);
+    if (IS_FAIL(ans)) {
+      printf("read waitResponseHeader fail\n");
+      return RESULT_FAIL;
+    }
+    for (size_t pos = 0; pos < recv_size; ++pos) {
+      uint8_t current_byte = recv_buffer[pos];
+      switch (recv_pos) {
+        case 0:
+          if (current_byte == 0xFA) {
+            printf("head_speed_000=%x\n", current_byte);
+          } else {
+            continue;
           }
-        recvPos++;
-        if(head_right)
-        {
-          printf("111\n");
           break;
-        }
+        case 1:
+          if (current_byte == 0xFA) {
+            printf("head_speed_111=%x\n", current_byte);
+          } else {
+            continue;
+          }
+          break;
+        case 2:
+          if (current_byte == 0xA5) {
+            printf("head_speed_222=%x\n", current_byte);
+            data_check_sum += current_byte;
+          } else {
+            continue;
+          }
+          break;
+        case 3:
+          if (current_byte == 0x5A) {
+            printf("head_speed_333=%x\n", current_byte);
+            data_check_sum += current_byte;
+          } else {
+            continue;
+          }
+          break;
+        case 4:
+          data_length = current_byte;
+          data_check_sum += current_byte;
+          printf("head_speed_444=%x\n", current_byte);
+          break;
+        case 5:
+          data_length += (current_byte * 0x100);
+          data_check_sum += current_byte;
+          printf("head_speed_555=%x\n", current_byte);
+          break;
+        case 6:
+          check_sum_cal = current_byte;
+          printf("head_speed_666=%x\n", current_byte);
+          break;
+        case 7:
+          check_sum_cal += (current_byte * 0x100);
+          printf("head_speed_777=%x\n", current_byte);
+          break;
+        case 8:
+          if (current_byte == 0x01) {
+            printf("head_speed_888=%x count=%d\n", current_byte, recv_pos);
+            data_check_sum += current_byte;
+            head_right = true;
+          }
+        default:
+          break;
       }
-      printf("recv_pos---=%d\n",recvPos);
-      if(recvPos == 9){
-        printf("222\n");
+      recv_pos++;
+      if (head_right) {
+        printf("111\n");
         break;
       }
     }
+    printf("recv_pos---=%d\n", recv_pos);
+    if (recv_pos == 9) {
+      printf("222\n");
+      break;
+    }
+  }
 
-    if(recvPos == 9)
-    {
-      printf("333\n");
-      startTs = get_milliseconds();
-      recvPos = 0;
-      while ((waitTime = get_milliseconds() - startTs) <= timeout)
-      {
-        size_t remainSize = data_lenth + 1;
-        size_t recvSize = 0;
-        result_t ans = serial_port_->waitForData(remainSize, timeout - waitTime, &recvSize);
+  if (recv_pos == 9) {
+    printf("333\n");
+    start_ts = get_milliseconds();
+    recv_pos = 0;
+    while ((wait_time = get_milliseconds() - start_ts) <= timeout) {
+      size_t remain_size = data_length + 1;
+      size_t recv_size = 0;
+      result_t ans = serial_port_->waitForData(remain_size, timeout - wait_time, &recv_size);
 
-        if (!IS_OK(ans))
-        {
-          return ans;
-        }
-        if(recvSize > remainSize)
-        {
-          recvSize = remainSize;
-        }
-        serial_port_->read_data(recvBuffer, recvSize);
-        for (size_t pos = 0; pos < 20; ++pos)
-        {
-              data_check_sum += recvBuffer[pos];
-        }
-        if(check_sum_cal == data_check_sum)
-        {
-          printf("------TRUE\n");
-          return RESULT_OK;
-        }else{
-          printf("------WRONG\n");
-        }
+      if (!IS_OK(ans)) {
+        return ans;
+      }
+      if (recv_size > remain_size) {
+        recv_size = remain_size;
+      }
+      serial_port_->read_data(recv_buffer, recv_size);
+      for (size_t pos = 0; pos < 20; ++pos) {
+        data_check_sum += recv_buffer[pos];
+      }
+      if (check_sum_cal == data_check_sum) {
+        printf("------TRUE\n");
+        return RESULT_OK;
+      } else {
+        printf("------WRONG\n");
       }
     }
-    return RESULT_FAIL;
-
+  }
+  return RESULT_FAIL;
 }
 
-result_t LidarDataProcessor::waitPackage(node_info *node, uint32_t timeout)
+result_t LidarDataProcessor::wait_package(node_info *node, uint32_t timeout)
 {
   if (!serial_port_) {
     return RESULT_FAIL;
   }
-  int recvPos = 0;
-  uint32_t startTs = get_milliseconds();
-  uint32_t waitTime = 0;
-  uint8_t * package_buffer =
-    (lidar_general_info_.intensity_data_flag) ?
-    (uint8_t *)&scan_packages_.package.package_Head :
-    (uint8_t *)&scan_packages_.packages.package_Head;
+  int recv_pos = 0;
+  uint32_t start_ts = get_milliseconds();
+  uint32_t wait_time = 0;
+  uint8_t *package_buffer = lidar_general_info_.intensity_data_flag
+    ? reinterpret_cast<uint8_t *>(&scan_packages_.package.package_Head)
+    : reinterpret_cast<uint8_t *>(&scan_packages_.packages.package_Head);
   uint8_t package_sample_num = 0;
-  int32_t angle_correct_for_distance_ = 0;
-  int package_recvPos = 0;
+  int32_t angle_correct_for_distance = 0;
+  int package_recv_pos = 0;
   uint8_t package_type = 0;
 
   if (package_sample_index_ == 0) {
-    recvPos = 0;
-    while ((waitTime = get_milliseconds() - startTs) <= timeout) {
-      size_t remainSize = PackagePaidBytes - recvPos;
-      size_t recvSize = 0;
+    recv_pos = 0;
+    while ((wait_time = get_milliseconds() - start_ts) <= timeout) {
+      size_t remain_size = PackagePaidBytes - recv_pos;
+      size_t recv_size = 0;
 
-      result_t ans = serial_port_->waitForData(remainSize, timeout - waitTime, &recvSize);
+      result_t ans = serial_port_->waitForData(remain_size, timeout - wait_time, &recv_size);
 
-      if (!IS_OK(ans))
-      {
+      if (!IS_OK(ans)) {
         return ans;
       }
 
-      if (recvSize > remainSize)
-      {
-        recvSize = remainSize;
+      if (recv_size > remain_size) {
+        recv_size = remain_size;
       }
 
-      serial_port_->read_data(globalRecvBuffer, recvSize);
+      serial_port_->read_data(global_recv_buffer_, recv_size);
 
-      for (size_t pos = 0; pos < recvSize; ++pos) {
-        uint8_t currentByte = globalRecvBuffer[pos];
-        switch (recvPos)
-        {
-        case 0:
-          if (currentByte == (PH & 0xFF)){
-          }else{
-            continue;
-          }
-          break;
-
-        case 1:
-          calculated_check_sum_ = PH;
-          if (currentByte == (PH >> 8)){
-          }else{
-            recvPos = 0;
-            continue;
-          }
-          break;
-
-        case 2:
-          sample_numl_and_ct_cal_ = currentByte;
-          package_type = currentByte & 0x01;
-          if ((package_type == CT_Normal) || (package_type == CT_RingStart)) {
-            if (package_type == CT_RingStart) {
-              if (lidar_time_->tim_scan_start == 0) {
-                lidar_time_->tim_scan_start = getTime();
-              } else {
-                lidar_time_->tim_scan_end = getTime();
-              }
-              scan_frequency = (currentByte & 0xFE) >> 1;
+      for (size_t pos = 0; pos < recv_size; ++pos) {
+        uint8_t current_byte = global_recv_buffer_[pos];
+        switch (recv_pos) {
+          case 0:
+            if (current_byte == (PH & 0xFF)) {
+            } else {
+              continue;
             }
-          }
-          else{
-            has_package_error = true;
-            recvPos = 0;
-            continue;
-          }
-
-          break;
-
-        case 3:
-          sample_numl_and_ct_cal_ += (currentByte * 0x100);
-          package_sample_num = currentByte;
-          break;
-
-        case 4:
-          if (currentByte & LIDAR_RESP_MEASUREMENT_CHECKBIT)
-          {
-            first_sample_angle_ = currentByte;
-          }else{
-            has_package_error = true;
-            recvPos = 0;
-            continue;
-          }
-
-          break;
-
-        case 5:
-          first_sample_angle_ += currentByte * 0x100;
-          calculated_check_sum_ ^= first_sample_angle_;
-          first_sample_angle_ = first_sample_angle_ >> 1;
-          break;
-
-        case 6:
-          if (currentByte & LIDAR_RESP_MEASUREMENT_CHECKBIT)
-          {
-            last_sample_angle_ = currentByte;
-          }
-          else
-          {
-            has_package_error = true;
-            recvPos = 0;
-            continue;
-          }
-          break;
-
-        case 7:
-          last_sample_angle_ = currentByte * 0x100 + last_sample_angle_;
-          last_sample_angle_calculated_ = last_sample_angle_;
-          last_sample_angle_ = last_sample_angle_ >> 1;
-
-          if (package_sample_num == 1) {
-            interval_sample_angle_ = 0.0f;
-          } else{
-            if (last_sample_angle_ < first_sample_angle_) {
-              if ((first_sample_angle_ > 270 * 64) && (last_sample_angle_ < 90 * 64)) {
-                interval_sample_angle_ =
-                  (float)((360 * 64 + last_sample_angle_ - first_sample_angle_) /
-                                                          ((package_sample_num - 1) *1.0));
-                interval_sample_angle_last_package_ = interval_sample_angle_;
-              } else {
-                interval_sample_angle_ = interval_sample_angle_last_package_;
+            break;
+          case 1:
+            calculated_check_sum_ = PH;
+            if (current_byte == (PH >> 8)) {
+            } else {
+              recv_pos = 0;
+              continue;
+            }
+            break;
+          case 2:
+            sample_numl_and_ct_cal_ = current_byte;
+            package_type = current_byte & 0x01;
+            if ((package_type == CT_Normal) || (package_type == CT_RingStart)) {
+              if (package_type == CT_RingStart) {
+                if (lidar_time_->tim_scan_start == 0) {
+                  lidar_time_->tim_scan_start = getTime();
+                } else {
+                  lidar_time_->tim_scan_end = getTime();
+                }
+                scan_frequency_ = (current_byte & 0xFE) >> 1;
               }
             } else {
-              interval_sample_angle_ =
-                (float)((last_sample_angle_ - first_sample_angle_) / ((package_sample_num - 1) * 1.0));
-              interval_sample_angle_last_package_ = interval_sample_angle_;
+              has_package_error_ = true;
+              recv_pos = 0;
+              continue;
             }
-          }
+            break;
+          case 3:
+            sample_numl_and_ct_cal_ += (current_byte * 0x100);
+            package_sample_num = current_byte;
+            break;
+          case 4:
+            if (current_byte & LIDAR_RESP_MEASUREMENT_CHECKBIT) {
+              first_sample_angle_ = current_byte;
+            } else {
+              has_package_error_ = true;
+              recv_pos = 0;
+              continue;
+            }
+            break;
+          case 5:
+            first_sample_angle_ += current_byte * 0x100;
+            calculated_check_sum_ ^= first_sample_angle_;
+            first_sample_angle_ = first_sample_angle_ >> 1;
+            break;
+          case 6:
+            if (current_byte & LIDAR_RESP_MEASUREMENT_CHECKBIT) {
+              last_sample_angle_ = current_byte;
+            } else {
+              has_package_error_ = true;
+              recv_pos = 0;
+              continue;
+            }
+            break;
+          case 7:
+            last_sample_angle_ = current_byte * 0x100 + last_sample_angle_;
+            last_sample_angle_calculated_ = last_sample_angle_;
+            last_sample_angle_ = last_sample_angle_ >> 1;
 
-          break;
-
-        case 8:
-          target_check_sum_ = currentByte;
-          break;
-
-        case 9:
-          target_check_sum_ += (currentByte * 0x100);
-          break;
+            if (package_sample_num == 1) {
+              interval_sample_angle_ = 0.0f;
+            } else {
+              if (last_sample_angle_ < first_sample_angle_) {
+                if ((first_sample_angle_ > 270 * 64) && (last_sample_angle_ < 90 * 64)) {
+                  interval_sample_angle_ =
+                    static_cast<float>(360 * 64 + last_sample_angle_ - first_sample_angle_) /
+                    static_cast<float>(package_sample_num - 1);
+                  interval_sample_angle_last_package_ = interval_sample_angle_;
+                } else {
+                  interval_sample_angle_ = interval_sample_angle_last_package_;
+                }
+              } else {
+                interval_sample_angle_ =
+                  static_cast<float>(last_sample_angle_ - first_sample_angle_) /
+                  static_cast<float>(package_sample_num - 1);
+                interval_sample_angle_last_package_ = interval_sample_angle_;
+              }
+            }
+            break;
+          case 8:
+            target_check_sum_ = current_byte;
+            break;
+          case 9:
+            target_check_sum_ += (current_byte * 0x100);
+            break;
         }
-        package_buffer[recvPos++] = currentByte;
+        package_buffer[recv_pos++] = current_byte;
       }
 
-      if (recvPos == PackagePaidBytes)
-      {
-        package_recvPos = recvPos;
+      if (recv_pos == PackagePaidBytes) {
+        package_recv_pos = recv_pos;
         break;
       }
     }
 
-    if (PackagePaidBytes == recvPos)
-    {
-      startTs = get_milliseconds();
-      recvPos = 0;
+    if (PackagePaidBytes == recv_pos) {
+      start_ts = get_milliseconds();
+      recv_pos = 0;
 
-      while ((waitTime = get_milliseconds() - startTs) <= timeout)
-      {
-        size_t remainSize = package_sample_num * PackageSampleBytes - recvPos;
-        size_t recvSize = 0;
-        result_t ans = serial_port_->waitForData(remainSize, timeout - waitTime, &recvSize);
+      while ((wait_time = get_milliseconds() - start_ts) <= timeout) {
+        size_t remain_size = package_sample_num * package_sample_bytes_ - recv_pos;
+        size_t recv_size = 0;
+        result_t ans = serial_port_->waitForData(remain_size, timeout - wait_time, &recv_size);
 
-        if (!IS_OK(ans))
-        {
+        if (!IS_OK(ans)) {
           return ans;
         }
 
-        if (recvSize > remainSize)
-        {
-          recvSize = remainSize;
+        if (recv_size > remain_size) {
+          recv_size = remain_size;
         }
 
-        serial_port_->read_data(globalRecvBuffer, recvSize);
+        serial_port_->read_data(global_recv_buffer_, recv_size);
 
-        for (size_t pos = 0; pos < recvSize; ++pos)
-        {
-            if (lidar_general_info_.intensity_data_flag) {
-              if (recvPos % 3 == 2) {
-                check_sum_16_value_holder_ += globalRecvBuffer[pos] * 0x100;
-                calculated_check_sum_ ^= check_sum_16_value_holder_;
-              } else if (recvPos % 3 == 1) {
-                check_sum_16_value_holder_ = globalRecvBuffer[pos];
-              } else {
-                check_sum_16_value_holder_ = globalRecvBuffer[pos];
-                check_sum_16_value_holder_ += 0x00 * 0x100;
-                calculated_check_sum_ ^= globalRecvBuffer[pos];
-              }
+        for (size_t pos = 0; pos < recv_size; ++pos) {
+          if (lidar_general_info_.intensity_data_flag) {
+            if (recv_pos % 3 == 2) {
+              check_sum_16_value_holder_ += global_recv_buffer_[pos] * 0x100;
+              calculated_check_sum_ ^= check_sum_16_value_holder_;
+            } else if (recv_pos % 3 == 1) {
+              check_sum_16_value_holder_ = global_recv_buffer_[pos];
             } else {
-              if (recvPos % 2 == 1) {
-                check_sum_16_value_holder_ += globalRecvBuffer[pos] * 0x100;
-                calculated_check_sum_ ^= check_sum_16_value_holder_;
-              } else {
-                check_sum_16_value_holder_ = globalRecvBuffer[pos];
-              }
+              check_sum_16_value_holder_ = global_recv_buffer_[pos];
+              check_sum_16_value_holder_ += 0x00 * 0x100;
+              calculated_check_sum_ ^= global_recv_buffer_[pos];
             }
-          package_buffer[package_recvPos + recvPos] = globalRecvBuffer[pos];
-          recvPos++;
+          } else {
+            if (recv_pos % 2 == 1) {
+              check_sum_16_value_holder_ += global_recv_buffer_[pos] * 0x100;
+              calculated_check_sum_ ^= check_sum_16_value_holder_;
+            } else {
+              check_sum_16_value_holder_ = global_recv_buffer_[pos];
+            }
+          }
+          package_buffer[package_recv_pos + recv_pos] = global_recv_buffer_[pos];
+          recv_pos++;
         }
 
-        if (package_sample_num * PackageSampleBytes == recvPos)
-        {
-          package_recvPos += recvPos;
+        if (package_sample_num * package_sample_bytes_ == recv_pos) {
+          package_recv_pos += recv_pos;
           break;
         }
       }
 
-      if (package_sample_num * PackageSampleBytes != recvPos)
-      {
+      if (package_sample_num * package_sample_bytes_ != recv_pos) {
         return RESULT_FAIL;
       }
-    }else{
+    } else {
       return RESULT_FAIL;
     }
 
     calculated_check_sum_ ^= sample_numl_and_ct_cal_;
     calculated_check_sum_ ^= last_sample_angle_calculated_;
-    if (calculated_check_sum_ != target_check_sum_)
-    {
+    if (calculated_check_sum_ != target_check_sum_) {
       printf(
         "data check, %x, %x, %d, %d\n",
         calculated_check_sum_,
         target_check_sum_,
         package_sample_num,
-        recvPos);
+        recv_pos);
       check_sum_result_ = false;
-      has_package_error = true;
-    }
-    else
-    {
+      has_package_error_ = true;
+    } else {
       check_sum_result_ = true;
     }
   }
-  uint8_t package_CT;
-  if(lidar_general_info_.intensity_data_flag)
-  {
-    package_CT = scan_packages_.package.package_CT;
-  }else{
-    package_CT = scan_packages_.packages.package_CT;
+
+  uint8_t package_ct;
+  if (lidar_general_info_.intensity_data_flag) {
+    package_ct = scan_packages_.package.package_CT;
+  } else {
+    package_ct = scan_packages_.packages.package_CT;
   }
 
   node->scan_frequency = 0;
 
-  if ((package_CT & 0x01) == CT_Normal)
-  {
+  if ((package_ct & 0x01) == CT_Normal) {
     node->sync_flag = Node_NotSync;
     memset(node->debug_info, 0xff, sizeof(node->debug_info));
 
-    if (!has_package_error)
-    {
-      if (package_index < 10)
-      {
-        node->debug_info[package_index] = (package_CT >> 1);
-        node->index = package_index;
-      }else{
+    if (!has_package_error_) {
+      if (package_index_ < 10) {
+        node->debug_info[package_index_] = (package_ct >> 1);
+        node->index = package_index_;
+      } else {
         node->index = 0xff;
       }
-      if (package_sample_index_ == 0)
-      {
-        package_index++;
+      if (package_sample_index_ == 0) {
+        package_index_++;
       }
-    }else{
+    } else {
       node->index = 255;
-      package_index = 0;
+      package_index_ = 0;
     }
-  }else{
+  } else {
     node->sync_flag = Node_Sync;
     node->index = 255;
-    package_index = 0;
+    package_index_ = 0;
 
-    if (check_sum_result_)
-    {
-      has_package_error = false;
-      node->scan_frequency = scan_frequency;
+    if (check_sum_result_) {
+      has_package_error_ = false;
+      node->scan_frequency = scan_frequency_;
     }
   }
 
@@ -543,45 +482,42 @@ result_t LidarDataProcessor::waitPackage(node_info *node, uint32_t timeout)
   node->stamp = 0;
 
   if (check_sum_result_) {
-    if(lidar_general_info_.intensity_data_flag) {
+    if (lidar_general_info_.intensity_data_flag) {
       node->distance_q2 =
-        (scan_packages_.package.packageSampleDistance[package_sample_index_* 3 + 2] * 64) +
-        (scan_packages_.package.packageSampleDistance[package_sample_index_* 3 + 1] >> 2);
+        (scan_packages_.package.packageSampleDistance[package_sample_index_ * 3 + 2] * 64) +
+        (scan_packages_.package.packageSampleDistance[package_sample_index_ * 3 + 1] >> 2);
       node->sync_quality =
-        (scan_packages_.package.packageSampleDistance[package_sample_index_* 3 + 1] & 0x03) * 64 +
+        (scan_packages_.package.packageSampleDistance[package_sample_index_ * 3 + 1] & 0x03) * 64 +
         (scan_packages_.package.packageSampleDistance[package_sample_index_ * 3] >> 2);
-      node->exp_m = scan_packages_.package.packageSampleDistance[package_sample_index_*3] & 0x01;
-    } else{
-      node->distance_q2 = scan_packages_.packages.packageSampleDistance[package_sample_index_]>>2;
+      node->exp_m = scan_packages_.package.packageSampleDistance[package_sample_index_ * 3] & 0x01;
+    } else {
+      node->distance_q2 = scan_packages_.packages.packageSampleDistance[package_sample_index_] >> 2;
       node->sync_quality =
-        ((uint16_t)((scan_packages_.packages.packageSampleDistance[package_sample_index_]) & 0x03));
+        static_cast<uint16_t>(scan_packages_.packages.packageSampleDistance[package_sample_index_] & 0x03);
     }
 
     if (node->distance_q2 != 0) {
-      angle_correct_for_distance_ =
-        (int32_t)(atan(19.16 * (node->distance_q2 - 90.15) / (90.15 * node->distance_q2)) * 64);
+      angle_correct_for_distance =
+        static_cast<int32_t>(atan(19.16 * (node->distance_q2 - 90.15) / (90.15 * node->distance_q2)) * 64);
     } else {
-      angle_correct_for_distance_ = 0;
+      angle_correct_for_distance = 0;
     }
 
     float sample_angle = interval_sample_angle_ * package_sample_index_;
 
-    if ((first_sample_angle_ + sample_angle + angle_correct_for_distance_) < 0) {
+    if ((first_sample_angle_ + sample_angle + angle_correct_for_distance) < 0) {
       node->angle_q6_checkbit = (((uint16_t)(first_sample_angle_ + sample_angle +
-                                               angle_correct_for_distance_ + 23040))
-                                   << LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) +
-                                  LIDAR_RESP_MEASUREMENT_CHECKBIT;
+        angle_correct_for_distance + 23040)) << LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) +
+        LIDAR_RESP_MEASUREMENT_CHECKBIT;
     } else {
-      if ((first_sample_angle_ + sample_angle + angle_correct_for_distance_) > 23040) {
+      if ((first_sample_angle_ + sample_angle + angle_correct_for_distance) > 23040) {
         node->angle_q6_checkbit = (((uint16_t)(first_sample_angle_ + sample_angle +
-                                                 angle_correct_for_distance_ - 23040))
-                                     << LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) +
-                                    LIDAR_RESP_MEASUREMENT_CHECKBIT;
-      } else{
+          angle_correct_for_distance - 23040)) << LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) +
+          LIDAR_RESP_MEASUREMENT_CHECKBIT;
+      } else {
         node->angle_q6_checkbit = (((uint16_t)(first_sample_angle_ + sample_angle +
-                                                 angle_correct_for_distance_))
-                                     << LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) +
-                                    LIDAR_RESP_MEASUREMENT_CHECKBIT;
+          angle_correct_for_distance)) << LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) +
+          LIDAR_RESP_MEASUREMENT_CHECKBIT;
       }
     }
   } else {
@@ -592,50 +528,46 @@ result_t LidarDataProcessor::waitPackage(node_info *node, uint32_t timeout)
     node->scan_frequency = 0;
   }
 
-  uint8_t nowPackageNum;
-
-  if(lidar_general_info_.intensity_data_flag)
-  {
-    nowPackageNum = scan_packages_.package.nowPackageNum;
-  }else{
-    nowPackageNum = scan_packages_.packages.nowPackageNum;
+  uint8_t now_package_num;
+  if (lidar_general_info_.intensity_data_flag) {
+    now_package_num = scan_packages_.package.nowPackageNum;
+  } else {
+    now_package_num = scan_packages_.packages.nowPackageNum;
   }
 
-  package_sample_index_ ++;
+  package_sample_index_++;
 
-  if (package_sample_index_ >= nowPackageNum)
-  {
+  if (package_sample_index_ >= now_package_num) {
     package_sample_index_ = 0;
     check_sum_result_ = false;
   }
   return RESULT_OK;
 }
 
-result_t LidarDataProcessor::waitScanData(node_info *nodebuffer, size_t &count, uint32_t timeout)
+result_t LidarDataProcessor::wait_scan_data(node_info *nodebuffer, size_t &count, uint32_t timeout)
 {
-  if(!lidar_status_->serial_connected)
-  {
+  if (!lidar_status_->serial_connected) {
     count = 0;
     return RESULT_FAIL;
   }
 
-  recvNodeCount = 0;
-  uint32_t startTs = get_milliseconds();
-  uint32_t waitTime = 0;
+  recv_node_count_ = 0;
+  uint32_t start_ts = get_milliseconds();
+  uint32_t wait_time = 0;
   result_t ans = RESULT_FAIL;
   /*超时处理及点数判断*/
-  while ((waitTime = get_milliseconds() - startTs) <= timeout && recvNodeCount < count)
+  while ((wait_time = get_milliseconds() - start_ts) <= timeout && recv_node_count_ < count)
   {
     node_info node;
-    ans = waitPackage(&node, timeout - waitTime);
+    ans = wait_package(&node, timeout - wait_time);
 
     if (!IS_OK(ans))
     {
-      count = recvNodeCount;
+      count = recv_node_count_;
       return ans;
     }
 
-    nodebuffer[recvNodeCount++] = node;
+    nodebuffer[recv_node_count_++] = node;
 
     if (node.sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT)
     {
@@ -646,32 +578,32 @@ result_t LidarDataProcessor::waitScanData(node_info *nodebuffer, size_t &count, 
 
       if (size > PackagePaidBytes && size < PackagePaidBytes * package_size)
       {
-        size_t packageNum = size / package_size;
-        size_t Number = size % package_size;
-        delay_time = packageNum * lidar_general_info_.scan_time_increment * package_size / 2;
+        size_t package_num = size / package_size;
+        size_t number = size % package_size;
+        delay_time = package_num * lidar_general_info_.scan_time_increment * package_size / 2;
 
-        if (Number > PackagePaidBytes)
+        if (number > PackagePaidBytes)
         {
-          delay_time += lidar_general_info_.scan_time_increment * ((Number - PackagePaidBytes) / 2);
+          delay_time += lidar_general_info_.scan_time_increment * ((number - PackagePaidBytes) / 2);
         }
 
-        size = Number;
+        size = number;
 
-        if (packageNum > 0 && Number == 0)
+        if (package_num > 0 && number == 0)
         {
           size = package_size;
         }
       }
-      nodebuffer[recvNodeCount - 1].stamp = size * trans_delay_ + delay_time;
-      nodebuffer[recvNodeCount - 1].scan_frequency = node.scan_frequency;
-      count = recvNodeCount;
+      nodebuffer[recv_node_count_ - 1].stamp = size * trans_delay_ + delay_time;
+      nodebuffer[recv_node_count_ - 1].scan_frequency = node.scan_frequency;
+      count = recv_node_count_;
       return RESULT_OK;
     }
-    if (recvNodeCount == count)
+    if (recv_node_count_ == count)
     {
       return RESULT_OK;
     }
   }
-  count = recvNodeCount;
+  count = recv_node_count_;
   return RESULT_FAIL;
 }
