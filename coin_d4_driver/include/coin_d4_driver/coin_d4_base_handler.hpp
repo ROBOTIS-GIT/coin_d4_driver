@@ -10,7 +10,7 @@
 #include <string>
 #include <thread>
 
-#include "coin_d4_driver/lidar_sdk/lidar_data_processing.h"
+#include "coin_d4_driver/lidar_sdk/lidar_data_processor.h"
 #include "coin_d4_driver/lidar_sdk/locker.h"
 #include "coin_d4_driver/lidar_sdk/mtime.h"
 #include "coin_d4_driver/lidar_sdk/serial_port.h"
@@ -74,7 +74,7 @@ private:
 
   size_t scan_node_count_ = 0;
 
-  std::shared_ptr<Lidar_Data_Processing> lidar_data_processing_;
+  std::shared_ptr<LidarDataProcessor> lidar_data_processing_;
   std::shared_ptr<Serial_Port> serial_port_;
   Event data_event_;
   Locker lock_;

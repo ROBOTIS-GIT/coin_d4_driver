@@ -55,22 +55,22 @@ struct LaserConfig
 
 struct node_info
 {
-  uint8_t sync_flag;          //sync flag
-  uint16_t sync_quality;      //! 信号质量
-  uint16_t angle_q6_checkbit; //! 测距点角度
-  uint16_t distance_q2;       //! 当前测距点距离
-  uint64_t stamp;             //! 时间戳
-  uint8_t scan_frequence;     //! 特定版本此值才有效,无效值是0
-  uint8_t exp_m;              //! 当前是否为高反光材质
+  uint8_t sync_flag;
+  uint16_t sync_quality;
+  uint16_t angle_q6_checkbit;
+  uint16_t distance_q2;
+  uint64_t stamp;
+  uint8_t scan_frequency;
+  uint8_t exp_m;
   uint8_t debug_info[12];
   uint8_t index;
 };
 
 typedef enum
 {
-  DEFAULT_TIMEOUT = 2000,    /**< 默认超时时间. */
-  DEFAULT_HEART_BEAT = 1000, /**< 默认检测掉电功能时间. */
-  MAX_SCAN_NODES = 800,     /**< 最大扫描点数. */
+  DEFAULT_TIMEOUT = 2000,
+  DEFAULT_HEART_BEAT = 1000,
+  MAX_SCAN_NODES = 800,
   DEFAULT_TIMEOUT_COUNT = 10,
 }TIME_CHECK;
 

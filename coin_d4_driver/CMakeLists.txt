@@ -20,7 +20,7 @@ include_directories(
 )
 
 set(LIBRARY_SRC
-  src/lidar_sdk/lidar_data_processing.cpp
+  src/lidar_sdk/lidar_data_processor.cpp
   src/lidar_sdk/mtime.cpp
   src/lidar_sdk/serial_port.cpp
   src/lidar_sdk/timer.cpp

@@ -87,7 +87,7 @@ void CoinD4BaseHandler::init_structs()
   }
 
   lidar_data_processing_ =
-    std::make_shared<Lidar_Data_Processing>(
+    std::make_shared<LidarDataProcessor>(
       lidar_time_.get(),
       lidar_status_.get(),
       lidar_general_info_,
@@ -204,10 +204,10 @@ void CoinD4BaseHandler::activate_grab_thread()
             if (local_buf[pos].sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
               if ((local_scan[0].sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT)) {
                 local_scan[0].stamp = local_buf[pos].stamp;
-                local_scan[0].scan_frequence = local_buf[pos].scan_frequence;
+                local_scan[0].scan_frequency = local_buf[pos].scan_frequency;
 
                 // If frequency is abnormal for over 30 seconds, trigger abnormal state
-                if(local_scan[0].scan_frequence > 200 || local_scan[0].scan_frequence < 10) {
+                if(local_scan[0].scan_frequency > 200 || local_scan[0].scan_frequency < 10) {
                   if(current_times() - lidar_time_->lidar_frequency_abnormal_time > 30000) {
                     lidar_status_->lidar_abnormal_state |= 0x02;
                   }

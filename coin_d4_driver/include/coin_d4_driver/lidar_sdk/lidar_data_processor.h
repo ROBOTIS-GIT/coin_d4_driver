@@ -1,5 +1,8 @@
-#ifndef COIN_D4_DRIVER__LIDAR_SDK__LIDAR_DATA_PROCESSING_H_
-#define COIN_D4_DRIVER__LIDAR_SDK__LIDAR_DATA_PROCESSING_H_
+// Copyright 2025 ROBOTIS CO., LTD.
+// Authors: Hyeongjun Jeon
+
+#ifndef COIN_D4_DRIVER__LIDAR_SDK__LIDAR_DATA_PROCESSOR_H_
+#define COIN_D4_DRIVER__LIDAR_SDK__LIDAR_DATA_PROCESSOR_H_
 
 #include <stdint.h>
 
@@ -10,22 +13,22 @@
 #include "coin_d4_driver/lidar_sdk/handling_info.hpp"
 
 
-class Lidar_Data_Processing
+class LidarDataProcessor
 {
 private:
-  uint16_t CheckSumCal;
-  uint16_t CheckSum;		         //校验和
-  uint16_t SampleNumlAndCTCal;
-  uint16_t LastSampleAngleCal;
+  uint16_t calculated_check_sum_;
+  uint16_t target_check_sum_;
+  uint16_t sample_numl_and_ct_cal_;
+  uint16_t last_sample_angle_calculated_;
   uint16_t Valu8Tou16;
   uint16_t package_Sample_Index; //包采样点索引
   uint16_t FirstSampleAngle;     //起始采样角
-  uint16_t LastSampleAngle;      //结束采样角
-  uint8_t scan_frequence;	       //协议中雷达转速
+  uint16_t last_sample_angle_;      //结束采样角
+  uint8_t scan_frequency;	       //协议中雷达转速
   bool CheckSumResult;
   bool has_package_error;
-  float IntervalSampleAngle;
-  float IntervalSampleAngle_LastPackage;
+  float interval_sample_angle_;
+  float interval_sample_angle_last_package_;
   int package_index;
 
   float start_t =0;
@@ -50,12 +53,12 @@ private:
 
 public:
 
-  Lidar_Data_Processing(
+  LidarDataProcessor(
     LidarTimeStatus * lidar_time,
     LidarHardwareStatus * lidar_status,
     LidarGeneralInfo & lidar_general_info,
     LidarPackage & scan_packages);
-  ~Lidar_Data_Processing();
+  ~LidarDataProcessor();
 
   void set_serial_port(Serial_Port * serial_port);
 
@@ -77,4 +80,4 @@ public:
   result_t waitPackage(node_info *node,uint32_t timeout = DEFAULT_TIMEOUT);
 };
 
-#endif  // COIN_D4_DRIVER__LIDAR_SDK__LIDAR_DATA_PROCESSING_H_
+#endif  // COIN_D4_DRIVER__LIDAR_SDK__LIDAR_DATA_PROCESSOR_H_

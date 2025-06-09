@@ -53,7 +53,7 @@ struct LidarHardwareStatus
 {
   bool serial_connected = false;
   bool lidar_ready = false;
-  bool lidar_last_status =false;
+  bool lidar_last_status = false;
   bool close_lidar = true;
   bool lidar_trap_restart = false;
 
