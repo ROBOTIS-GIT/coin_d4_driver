@@ -6,8 +6,8 @@
   <description>ROS package for LDS-03 (COIN-D4) Lidar</description>
   <maintainer email="pyo@robotis.com">Pyo</maintainer>
   <license>Apache 2.0</license>
-  <url type="repository">https://github.com/ROBOTIS-GIT/lds_03_driver</url>
-  <url type="bugtracker">https://github.com/ROBOTIS-GIT/lds_03_driver/issues</url>
+  <url type="repository">https://github.com/ROBOTIS-GIT/coin_d4_driver</url>
+  <url type="bugtracker">https://github.com/ROBOTIS-GIT/coin_d4_driver/issues</url>
   <author>cspc lidar team</author>
   <author email="jhj@robotis.com">Hyeongjun Jeon</author>
   <buildtool_depend>ament_cmake</buildtool_depend>
