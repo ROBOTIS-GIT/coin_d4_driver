@@ -1,7 +1,6 @@
 # LDS-03 (COIN-D4)
-Since 2025, the LDS-03 (COIN-D4) replaces the previous LDS-02 (LD08) sensor.
-Since 2022, the LDS-02 (LD08) replaces the previous LDS-01 sensor.
-
+- Since 2025, the LDS-03 (COIN-D4) replaces the previous LDS-02 (LD08) sensor.
+- Since 2022, the LDS-02 (LD08) replaces the previous LDS-01 sensor.
 - Active Branches: humble, jazzy, main
 
 ## Open Source Projects Related to TurtleBot3
