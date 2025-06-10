@@ -1,7 +1,6 @@
 # LDS-03 (COIN-D4)
-Since 2025, the LDS-03 (COIN-D4) replaces the previous LDS-02 (LD08) sensor.
-Since 2022, the LDS-02 (LD08) replaces the previous LDS-01 sensor.
-
+- Since 2025, the LDS-03 (COIN-D4) replaces the previous LDS-02 (LD08) sensor.
+- Since 2022, the LDS-02 (LD08) replaces the previous LDS-01 sensor.
 - Active Branches: humble, jazzy, main
 
 ## Open Source Projects Related to TurtleBot3
@@ -16,7 +15,7 @@ Since 2022, the LDS-02 (LD08) replaces the previous LDS-01 sensor.
 - [turtlebot3_home_service_challenge](https://github.com/ROBOTIS-GIT/turtlebot3_home_service_challenge)
 - [hls_lfcd_lds_driver](https://github.com/ROBOTIS-GIT/hls_lfcd_lds_driver)
 - [ld08_driver](https://github.com/ROBOTIS-GIT/ld08_driver)
-- [lds_03_driver](https://github.com/ROBOTIS-GIT/lds_03_driver)
+- [coin_d4_driver](https://github.com/ROBOTIS-GIT/coin_d4_driver)
 - [open_manipulator](https://github.com/ROBOTIS-GIT/open_manipulator)
 - [dynamixel_sdk](https://github.com/ROBOTIS-GIT/DynamixelSDK)
 - [OpenCR-Hardware](https://github.com/ROBOTIS-GIT/OpenCR-Hardware)
