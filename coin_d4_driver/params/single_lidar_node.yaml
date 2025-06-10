@@ -1,0 +1,9 @@
+/**:
+  ros__parameters:
+    port: "/dev/ttyUSB1"
+    frame_id: "laser_link"
+    baudrate: 230400
+    version: 4
+    topic_name: "sensor/msg/scan"
+    reverse: True
+    warmup_time: 5  # seconds

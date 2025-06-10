@@ -1,0 +1,19 @@
+/**:
+  ros__parameters:
+    lidar_list: ['lidar_0', 'lidar_1']
+    lidar_0:
+      port: "/dev/ttyUSB1"
+      frame_id: "laser_link"
+      baudrate: 230400
+      version: 4
+      topic_name: "sensor/msg/scan_0"
+      reverse: True
+      warmup_time: 5  # seconds
+    lidar_1:
+      port: "/dev/ttyUSB2"
+      frame_id: "laser_link"
+      baudrate: 230400
+      version: 4
+      topic_name: "sensor/msg/scan_1"
+      reverse: True
+      warmup_time: 5  # seconds
