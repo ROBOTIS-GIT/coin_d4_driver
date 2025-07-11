@@ -1,6 +1,6 @@
 /**:
   ros__parameters:
-    port: "/dev/coin_d4"
+    port: "/dev/tb3_lidar"
     frame_id: "base_scan"
     baudrate: 230400
     version: 4
