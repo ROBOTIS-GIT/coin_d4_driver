@@ -6,14 +6,14 @@
       frame_id: "base_scan"
       baudrate: 230400
       version: 4
-      topic_name: "sensor/msg/scan_0"
-      reverse: True
+      topic_name: "scan_0"
+      reverse: False
       warmup_time: 5  # seconds
     lidar_1:
       port: "/dev/ttyUSB1"
       frame_id: "base_scan"
       baudrate: 230400
       version: 4
-      topic_name: "sensor/msg/scan_1"
-      reverse: True
+      topic_name: "scan_1"
+      reverse: False
       warmup_time: 5  # seconds

@@ -5,5 +5,5 @@
     baudrate: 230400
     version: 4
     topic_name: "scan"
-    reverse: True
+    reverse: False
     warmup_time: 5  # seconds
