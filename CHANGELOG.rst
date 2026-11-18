@@ -2,6 +2,11 @@
 Changelog for package coin_d4_driver
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.0.2 (2026-11-18)
+------------------
+* Replaced M_PI with an explicit constant to fix ROS 2 Rolling builds
+* Contributors: Taehun Lim
+
 1.0.1 (2025-07-11)
 ------------------
 * Modified parameter files for single- and multi-lidar nodes used with TurtleBot3

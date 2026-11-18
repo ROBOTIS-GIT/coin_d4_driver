@@ -20,6 +20,10 @@
 
 #include "coin_d4_driver/coin_d4_base_handler.hpp"
 
+namespace
+{
+constexpr double kPi = 3.14159265358979323846;
+}
 
 namespace robotis
 {
@@ -460,9 +464,9 @@ void CoinD4BaseHandler::parse_lidar_serial_data(LaserScan & outscan)
   if (count < MAX_SCAN_NODES && count > 0) {
     uint64_t scan_time = (lidar_time_->scan_end_time - lidar_time_->scan_start_time);
 
-    outscan.config.angle_increment = 2.0 * M_PI / count;
+    outscan.config.angle_increment = 2.0 * kPi / count;
     outscan.config.min_angle = 0;
-    outscan.config.max_angle = 2 * M_PI;
+    outscan.config.max_angle = 2 * kPi;
     outscan.config.min_range = 0.10;
     outscan.config.max_range = 100.0;
     outscan.config.scan_time = static_cast<float>(scan_time * 1.0 / 1e9);
